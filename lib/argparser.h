@@ -67,7 +67,7 @@ struct PositionParserNode {
     bool (*validation_string)(const char *const &value) = nullptr;
 };
 
-const int32_t kBuffSize = 1024;
+const int32_t kBuffSize = 128;
 struct ArgumentParser {
     const char *name;
     uint32_t buff_size;
