@@ -6,13 +6,14 @@ bool nargparse::EqualString(const char *left, const char *right) {
         return false;
     }
 
-    for (uint32_t i = 0; left[i] != '\0'; i++) {
+    uint32_t i = 0;
+    for (; left[i] != '\0'; i++) {
         if (left[i] != right[i]) {
             return false;
         }
     }
 
-    return true;
+    return left[i] == right[i];
 }
 
 void nargparse::ExpandFlagList(ParserNode *node, bool *flag) {
@@ -110,7 +111,7 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
     }
     case VariantBase::BaseEnum::kBool: {
         bool current = 0;
-        if (EqualString(new_arg, "true") || !EqualString(new_arg, "0")) {
+        if (EqualString(new_arg, "true") && !EqualString(new_arg, "0")) {
             current = 1;
         }
 
@@ -219,6 +220,8 @@ nargparse::ParserNode *nargparse::AddArgument(ArgumentParser &parser, const char
     }
 }
 
+//default AddArgument
+
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t &value, bool (*validation)(const int32_t &value), const char *help_info) {
     VariantBase current;
@@ -255,6 +258,8 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     node->validation_string = validation;
 }
 
+//less validation
+
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t &value, const char *help_info) {
     AddArgument(parser, short_argument, long_argument, value, FTrueInt, help_info);
@@ -275,6 +280,8 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     AddArgument(parser, short_argument, long_argument, value, FTrueString, help_info);
 }
 
+//preference AddArgument
+
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, bool (*validation)(const int32_t &value), const char *help_info) {
     AddArgument(parser, short_argument, long_argument, *value, validation, help_info);
@@ -289,6 +296,8 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
                             double *value, bool (*validation)(const double &value), const char *help_info) {
     AddArgument(parser, short_argument, long_argument, *value, validation, help_info);
 }
+
+//preference AddArgument less validation
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, const char *help_info) {
@@ -358,25 +367,20 @@ void nargparse::AddArgument(ArgumentParser &parser, char *value, const char *nam
     node->validation_string = validation;
 }
 
-//---
-
 void nargparse::AddArgument(ArgumentParser &parser, int32_t *value, const char *name, CountArgument count_argument,
     bool (*validation)(const int32_t &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument);
+        AddArgument(parser, *value, name, count_argument, validation, help_info);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, bool *value, const char *name, CountArgument count_argument,
     bool (*validation)(const bool &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument);
+        AddArgument(parser, *value, name, count_argument, validation, help_info);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, double *value, const char *name, CountArgument count_argument,
     bool (*validation)(const double &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument);
+        AddArgument(parser, *value, name, count_argument, validation, help_info);
 }
-
-
-//--
 
 void nargparse::MarkFlags(ParserNode *node) {
     FlagNode *current = node->begin_flag;
@@ -563,7 +567,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     if (!node) {
         return false;
     }
-    BaseNode *current_value = node->prev_result;
+    BaseNode *current_value = node->begin_result;
 
     for (uint32_t k = 0; k < index; k++) {
         current_value = current_value->next;
@@ -581,7 +585,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     if (!node) {
         return false;
     }
-    BaseNode *current_value = node->prev_result;
+    BaseNode *current_value = node->begin_result;
 
     for (uint32_t k = 0; k < index; k++) {
         current_value = current_value->next;
@@ -599,7 +603,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     if (!node) {
         return false;
     }
-    BaseNode *current_value = node->prev_result;
+    BaseNode *current_value = node->begin_result;
 
     for (uint32_t k = 0; k < index; k++) {
         current_value = current_value->next;
