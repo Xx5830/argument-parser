@@ -180,7 +180,7 @@ bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool 
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, double *value);
 
-ArgumentParser CreateParser(const char *name, uint32_t buff_size);
+ArgumentParser CreateParser(const char *name, uint32_t buff_size = 1024);
 
 void AddHelp(ArgumentParser &parser);
 

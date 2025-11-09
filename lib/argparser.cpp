@@ -574,7 +574,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     return GetRepeated(parser, name, index, *value);
 }
 
-nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buff_size = 1024) {
+nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buff_size) {
     return ArgumentParser{name, buff_size};
 }
 
