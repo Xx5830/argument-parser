@@ -13,14 +13,14 @@ const CountArgument kNargsOptional = CountArgument::kNargsOptional;
 
 
 union BaseTypePointer {
-    int64_t *t1;
+    int32_t *t1;
     bool *t2;
     double *t3;
     const char *t4;
 };
 
 struct VariantBase {
-    enum class BaseEnum { kLongInt, kBool, kDouble, kString };
+    enum class BaseEnum { kInt, kBool, kDouble, kString };
     BaseTypePointer element;
     BaseEnum type;
 };
@@ -45,7 +45,7 @@ struct ParserNode {
     FlagNode *prev_end_flag = nullptr;
     BaseNode *begin_base = nullptr;
     BaseNode *prev_end_base = nullptr;
-    bool (*validation_int)(const int64_t &value) = nullptr;
+    bool (*validation_int)(const int32_t &value) = nullptr;
     bool (*validation_double)(const double &value) = nullptr;
     bool (*validation_bool)(const bool &value) = nullptr;
     bool (*validation_string)(const char *const &value) = nullptr;
@@ -61,7 +61,7 @@ struct PositionParserNode {
     uint32_t size = 0;
     BaseNode *begin_result = nullptr;
     BaseNode *prev_result = nullptr;
-    bool (*validation_int)(const int64_t &value) = nullptr;
+    bool (*validation_int)(const int32_t &value) = nullptr;
     bool (*validation_double)(const double &value) = nullptr;
     bool (*validation_bool)(const bool &value) = nullptr;
     bool (*validation_string)(const char *const &value) = nullptr;
@@ -77,7 +77,7 @@ struct ArgumentParser {
     PositionParserNode *prev_end_pos;
 };
 
-bool FTrueInt(const int64_t &value) { return true; }
+bool FTrueInt(const int32_t &value) { return true; }
 bool FTrueDouble(const double &value) { return true; }
 bool FTrueBool(const bool &value) { return true; }
 bool FTrueString(const char *const &value) { return true; }
@@ -111,16 +111,22 @@ void AddFlag(ArgumentParser &parser, const char *short_argument, const char *lon
 
 ParserNode *AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                                    VariantBase value, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int64_t &value,
-                 bool (*validation)(const int64_t &value) = FTrueInt, const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t &value,
+                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &value,
                  bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
+                 bool (*validation)(const bool &value), const char *help_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
+                 bool (*validation)(const double &value), const char *help_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double &value,
                  bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
+                 const char *help_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, char *value,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int64_t &value,
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t &value,
                  const char *help_info = non_info);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &value,
@@ -132,12 +138,21 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, char *value,
                  const char *help_info = non_info);
 
-PositionParserNode *AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
-                                    CountArgument count_argument = CountArgument::kNargsZeroOrMore,
-                                    const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
+                 bool (*validation)(const int32_t &value), const char *help_info);
 
-void AddArgument(ArgumentParser &parser, int64_t &value, const char *name, CountArgument count_argument,
-                 bool (*validation)(const int64_t &value) = FTrueInt, const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
+                 const char *help_info);
+
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
+                 const char *help_info);
+
+PositionParserNode *AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
+                                        CountArgument count_argument = CountArgument::kNargsZeroOrMore,
+                                        const char *help_info = non_info);
+
+void AddArgument(ArgumentParser &parser, int32_t &value, const char *name, CountArgument count_argument,
+                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
 
 void AddArgument(ArgumentParser &parser, bool &value, const char *name, CountArgument count_argument,
                  bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
@@ -166,7 +181,7 @@ void FreeParser(ArgumentParser &parser);
 
 uint32_t GetRepeatedCount(ArgumentParser &parser, const char *name);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int64_t &value);
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t &value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool &value);
 
@@ -174,7 +189,7 @@ bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, doubl
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int64_t *value);
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value);
 
