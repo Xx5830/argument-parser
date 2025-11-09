@@ -220,7 +220,7 @@ nargparse::ParserNode *nargparse::AddArgument(ArgumentParser &parser, const char
     }
 }
 
-//default AddArgument
+// default AddArgument
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t &value, bool (*validation)(const int32_t &value), const char *help_info) {
@@ -249,8 +249,8 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     node->validation_double = validation;
 }
 
-void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, char *value,
-                            bool (*validation)(const char *const &value), const char *help_info) {
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
+                            const char *value, bool (*validation)(const char *const &value), const char *help_info) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kString;
     current.element.t4 = value;
@@ -258,7 +258,7 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     node->validation_string = validation;
 }
 
-//less validation
+// less validation
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t &value, const char *help_info) {
@@ -275,12 +275,12 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     AddArgument(parser, short_argument, long_argument, value, FTrueDouble, help_info);
 }
 
-void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, char *value,
-                            const char *help_info) {
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
+                            const char *value, const char *help_info) {
     AddArgument(parser, short_argument, long_argument, value, FTrueString, help_info);
 }
 
-//preference AddArgument
+// preference AddArgument
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, bool (*validation)(const int32_t &value), const char *help_info) {
@@ -296,8 +296,13 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
                             double *value, bool (*validation)(const double &value), const char *help_info) {
     AddArgument(parser, short_argument, long_argument, *value, validation, help_info);
 }
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
+                            char (*value)[kBuffSize], bool (*validation)(const char *const &value),
+                            const char *help_info) {
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info);
+}
 
-//preference AddArgument less validation
+// preference AddArgument less validation
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, const char *help_info) {
@@ -312,6 +317,11 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             double *value, const char *help_info) {
     AddArgument(parser, short_argument, long_argument, *value, FTrueDouble, help_info);
+}
+
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
+                            char (*value)[kBuffSize], const char *help_info) {
+    AddArgument(parser, short_argument, long_argument, value, FTrueString, help_info);
 }
 
 nargparse::PositionParserNode *nargparse::AddPositionArgument(ArgumentParser &parser, VariantBase value,
@@ -358,7 +368,7 @@ void nargparse::AddArgument(ArgumentParser &parser, double &value, const char *n
     node->validation_double = validation;
 }
 
-void nargparse::AddArgument(ArgumentParser &parser, char *value, const char *name, CountArgument count_argument,
+void nargparse::AddArgument(ArgumentParser &parser, const char *value, const char *name, CountArgument count_argument,
                             bool (*validation)(const char *const &value), const char *help_info) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kString;
@@ -368,18 +378,24 @@ void nargparse::AddArgument(ArgumentParser &parser, char *value, const char *nam
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, int32_t *value, const char *name, CountArgument count_argument,
-    bool (*validation)(const int32_t &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument, validation, help_info);
+                            bool (*validation)(const int32_t &value), const char *help_info) {
+    AddArgument(parser, *value, name, count_argument, validation, help_info);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, bool *value, const char *name, CountArgument count_argument,
-    bool (*validation)(const bool &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument, validation, help_info);
+                            bool (*validation)(const bool &value), const char *help_info) {
+    AddArgument(parser, *value, name, count_argument, validation, help_info);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, double *value, const char *name, CountArgument count_argument,
-    bool (*validation)(const double &value), const char *help_info) {
-        AddArgument(parser, *value, name, count_argument, validation, help_info);
+                            bool (*validation)(const double &value), const char *help_info) {
+    AddArgument(parser, *value, name, count_argument, validation, help_info);
+}
+
+void nargparse::AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name,
+                            CountArgument count_argument, bool (*validation)(const char *const &value),
+                            const char *help_info) {
+    AddArgument(parser, value, name, count_argument, validation, help_info);
 }
 
 void nargparse::MarkFlags(ParserNode *node) {
