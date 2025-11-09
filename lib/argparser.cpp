@@ -47,7 +47,8 @@ void nargparse::ExpandPositionParserList(Parser &parser, PositionParserNode *ele
     }
 }
 
-void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_arg) {
+bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_arg) {
+    bool result_write = true;
     switch (node->place_save_first.type) {
     case VariantBase::BaseEnum::kLongInt: {
         int64_t current = atoll(new_arg);
@@ -63,6 +64,8 @@ void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
             } else {
                 node->prev_result = new BaseNode{nullptr, new_variant};
             }
+        } else {
+            result_write = false;
         }
         break;
     }
@@ -80,6 +83,8 @@ void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
             } else {
                 node->prev_result = new BaseNode{nullptr, new_variant};
             }
+        } else {
+            result_write = false;
         }
         break;
     }
@@ -109,6 +114,8 @@ void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
             } else {
                 node->prev_result = new BaseNode{nullptr, new_variant};
             }
+        } else {
+            result_write = false;
         }
         break;
     }
@@ -118,7 +125,7 @@ void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
             current = 1;
         }
 
-        if (node->validation_int(current)) {
+        if (node->validation_bool(current)) {
             VariantBase new_variant;
             new_variant.element.t2 = new bool{current};
             new_variant.type = VariantBase::BaseEnum::kLongInt;
@@ -130,16 +137,30 @@ void nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
             } else {
                 node->prev_result = new BaseNode{nullptr, new_variant};
             }
+        } else {
+            result_write = false;
         }
         break;
     }
     }
+
+    return result_write;
 }
 
 nargparse::ParserNode *nargparse::GetParserNode(Parser &parser, const char *short_argument, const char *long_argument) {
     ParserNode *current = parser.begin;
 
     while (current && !(current->short_argument == short_argument) && !(current->long_argument == long_argument)) {
+        current = current->next;
+    }
+
+    return current;
+}
+
+nargparse::ParserNode *nargparse::GetParserNode(Parser &parser, const char *name) {
+    ParserNode *current = parser.begin;
+
+    while (current && !(current->short_argument == name) && !(current->long_argument == name)) {
         current = current->next;
     }
 
@@ -212,21 +233,21 @@ void nargparse::AddArgument(Parser &parser, const char *short_argument, const ch
 }
 
 void nargparse::AddArgument(Parser &parser, const char *short_argument, const char *long_argument, bool &value,
-                            bool (*validation)(const double &value), const char *help_info) {
+                            bool (*validation)(const bool &value), const char *help_info) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kBool;
     current.element.t2 = &value;
     ParserNode *node = AddArgument(parser, short_argument, long_argument, current, help_info);
-    node->validation_double = validation;
+    node->validation_bool = validation;
 }
 
 void nargparse::AddArgument(Parser &parser, const char *short_argument, const char *long_argument, double &value,
-                            bool (*validation)(const bool &value), const char *help_info) {
+                            bool (*validation)(const double &value), const char *help_info) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kDouble;
     current.element.t3 = &value;
     ParserNode *node = AddArgument(parser, short_argument, long_argument, current, help_info);
-    node->validation_bool = validation;
+    node->validation_double = validation;
 }
 
 void nargparse::AddArgument(Parser &parser, const char *short_argument, const char *long_argument, char *value,
@@ -238,7 +259,6 @@ void nargparse::AddArgument(Parser &parser, const char *short_argument, const ch
     node->validation_string = validation;
 }
 
-//------------free
 
 nargparse::PositionParserNode *nargparse::AddFreeArgument(Parser &parser, VariantBase value, const char *name,
                                                           CountArgument count_argument, const char *help_info) {
@@ -290,4 +310,238 @@ void nargparse::AddArgument(Parser &parser, char *value, const char *name, Count
     current.element.t4 = value;
     PositionParserNode *node = AddFreeArgument(parser, current, name, count_argument, help_info);
     node->validation_string = validation;
+}
+
+void nargparse::MarkFlags(ParserNode *node) {
+    FlagNode *current = node->begin_flag;
+    while (current) {
+        *current->element = true;
+        current = current->next;
+    }
+}
+
+bool nargparse::SetValues(ParserNode *node, const char *value) {
+    BaseNode *current_node = node->begin_base;
+
+    bool validation_result = true;
+    while (current_node) {
+        switch (current_node->element.type) {
+        case VariantBase::BaseEnum::kLongInt: {
+            int64_t current = atoll(value);
+            if (node->validation_int(current)) {
+                *current_node->element.element.t1 = current;
+            } else {
+                validation_result = false;
+            }
+            break;
+        }
+        case VariantBase::BaseEnum::kDouble: {
+            double current = atof(value);
+            if (node->validation_double(current)) {
+                *current_node->element.element.t3 = current;
+            } else {
+                validation_result = false;
+            }
+            break;
+        }
+        case VariantBase::BaseEnum::kString: {
+            const char *current;
+
+            if (node->validation_string(current)) {
+                current_node->element.element.t4 = current;
+            } else {
+                validation_result = false;
+            }
+            break;
+        }
+        case VariantBase::BaseEnum::kBool: {
+            bool current = 0;
+            if (value == "true" || !(value == "0")) {
+                current = 1;
+            }
+
+            if (node->validation_bool(current)) {
+                *current_node->element.element.t2 = current;
+            } else {
+                validation_result = false;
+            }
+            break;
+        }
+        }
+
+        current_node = current_node->next;
+    }
+
+    return validation_result;
+}
+
+bool nargparse::Parse(Parser &parser, uint32_t argc, char **argv) {
+    bool result_parsing = true;
+    PositionParserNode *current_position_node = parser.begin_pos;
+
+    for (uint32_t index_argv = 0; result_parsing && index_argv < argc; index_argv++) {
+        ParserNode *node = GetParserNode(parser, argv[index_argv]);
+
+        if (node) {
+            ++index_argv;
+            char *argument = argv[index_argv];
+
+            MarkFlags(node);
+            result_parsing &= SetValues(node, argv[index_argv]);
+
+            if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
+                if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
+                    current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
+                    current_position_node = current_position_node->next;
+                }
+            }
+        } else {
+            if (!current_position_node) {
+                return false;
+            }
+
+            result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
+
+            if (current_position_node->count_argument == CountArgument::kNargsRequired ||
+                current_position_node->count_argument == CountArgument::kNargsOptional) {
+                if (current_position_node->size > 1) {
+                    result_parsing = false;
+                }
+                current_position_node = current_position_node->next;
+            }
+        }
+    }
+
+    if (current_position_node) {
+        if (current_position_node->count_argument == CountArgument::kNargsRequired ||
+            current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
+            if (current_position_node->size < 1) {
+                result_parsing = false;
+            }
+            current_position_node = current_position_node->next;
+        }
+    }
+
+    return result_parsing;
+}
+
+void nargparse::FreeBaseList(BaseNode *node){
+    while (node){
+        BaseNode *next = node->next;
+        delete node;
+        node = next;
+    }
+}
+
+void nargparse::FreeFlagList(FlagNode *node){
+    while (node){
+        FlagNode*next = node->next;
+        delete node;
+        node = next;
+    }
+}
+
+void nargparse::FreeUsuallyArguments(Parser &parser){
+    ParserNode *current_node = parser.begin;
+    while (current_node){
+        ParserNode* next = current_node->next;
+        FreeBaseList(current_node->begin_base);
+        FreeFlagList(current_node->begin_flag);
+        delete current_node;
+        current_node = next;
+    }
+}
+
+void nargparse::FreePositionArguments(Parser &parser){
+    PositionParserNode *current_node = parser.begin_pos;
+    while (current_node){
+        PositionParserNode* next = current_node->next;
+        FreeBaseList(current_node->begin_result);
+        delete current_node;
+        current_node = next;
+    }
+}
+
+void nargparse::FreeParser(Parser &parser){
+    FreeUsuallyArguments(parser);
+    FreePositionArguments(parser);
+}
+
+uint32_t nargparse::GetRepeatedCount(Parser &parser, const char* name){
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    uint32_t result = node->size;
+
+    return result;
+}
+
+bool nargparse::GetRepeated(Parser &parser, const char* name, uint32_t index, int64_t &value){
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    if (!node){
+        return false;
+    }
+    BaseNode *current_value = node->prev_result;
+
+    for (uint32_t k = 0; k < index; k++){
+        current_value = current_value->next;
+        if (!current_value){
+            return false;
+        }
+    }
+
+    value = *current_value->element.element.t1;
+    return true;
+}
+
+bool nargparse::GetRepeated(Parser &parser, const char* name, uint32_t index, bool &value){
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    if (!node){
+        return false;
+    }
+    BaseNode *current_value = node->prev_result;
+
+    for (uint32_t k = 0; k < index; k++){
+        current_value = current_value->next;
+        if (!current_value){
+            return false;
+        }
+    }
+
+    value = *current_value->element.element.t2;
+    return true;
+}
+
+bool nargparse::GetRepeated(Parser &parser, const char* name, uint32_t index, double &value){
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    if (!node){
+        return false;
+    }
+    BaseNode *current_value = node->prev_result;
+
+    for (uint32_t k = 0; k < index; k++){
+        current_value = current_value->next;
+        if (!current_value){
+            return false;
+        }
+    }
+
+    value = *current_value->element.element.t3;
+    return true;
+}
+
+bool nargparse::GetRepeated(Parser &parser, const char* name, uint32_t index, const char *value){
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    if (!node){
+        return false;
+    }
+    BaseNode *current_value = node->prev_result;
+
+    for (uint32_t k = 0; k < index; k++){
+        current_value = current_value->next;
+        if (!current_value){
+            return false;
+        }
+    }
+
+    value = current_value->element.element.t4;
+    return true;
 }

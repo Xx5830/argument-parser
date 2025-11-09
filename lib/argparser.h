@@ -16,7 +16,7 @@ union BaseTypePointer {
     int64_t *t1;
     bool *t2;
     double *t3;
-    char *t4;
+    const char *t4;
 };
 
 struct VariantBase {
@@ -89,9 +89,10 @@ void ExpandBaseList(ParserNode *node, VariantBase element);
 void ExpandParserList(Parser &parser, ParserNode *element);
 
 void ExpandPositionParserList(Parser &parser, PositionParserNode *element);
-void WritePositionArgument(PositionParserNode *node, const char *new_arg);
+bool WritePositionArgument(PositionParserNode *node, const char *new_arg);
 
 ParserNode *GetParserNode(Parser &parser, const char *short_argument, const char *long_argument);
+ParserNode *GetParserNode(Parser &parser, const char *name);
 
 nargparse::PositionParserNode *GetPositionParserNode(Parser &parser, const char *name);
 
@@ -107,13 +108,11 @@ ParserNode *AddArgument(Parser &parser, const char *short_argument, const char *
 void AddArgument(Parser &parser, const char *short_argument, const char *long_argument, int64_t &value,
                  bool (*validation)(const int64_t &value) = FTrueInt, const char *help_info = non_info);
 void AddArgument(Parser &parser, const char *short_argument, const char *long_argument, bool &value,
-                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
-void AddArgument(Parser &parser, const char *short_argument, const char *long_argument, double &value,
                  bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
+void AddArgument(Parser &parser, const char *short_argument, const char *long_argument, double &value,
+                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
 void AddArgument(Parser &parser, const char *short_argument, const char *long_argument, char *value,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
-
-//---------------free
 
 PositionParserNode* AddFreeArgument(Parser &parser, VariantBase value, const char* name, CountArgument count_argument = CountArgument::kNargsZeroOrMore, const char* help_info = non_info);
 
@@ -129,8 +128,28 @@ void AddArgument(Parser &parser, double &value, const char *name, CountArgument 
 void AddArgument(Parser &parser, char *value, const char *name, CountArgument count_argument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
-bool Parse(Parser &parser, uint32_t argc, char** argv){
+void MarkFlags(ParserNode *node);
 
-}
+bool SetValues(ParserNode *node, const char* value);
+
+bool Parse(Parser &parser, uint32_t argc, char** argv);
+
+void FreeBaseList(BaseNode *node);
+
+void FreeFlagList(FlagNode *node);
+
+void FreeUsuallyArguments(Parser &parser);
+
+void FreePositionArguments(Parser &parser);
+
+void FreeParser(Parser &parser);
+
+uint32_t GetRepeatedCount(Parser &parser, const char *name);
+
+bool GetRepeated(Parser &parser, const char *name, uint32_t index, int64_t &value);
+
+bool GetRepeated(Parser &parser, const char *name, uint32_t index, bool &value);
+
+bool GetRepeated(Parser &parser, const char *name, uint32_t index, double &value);
 
 } // namespace nargparse
