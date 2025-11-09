@@ -6,6 +6,11 @@
 namespace nargparse {
 
 enum class CountArgument { kNargsZeroOrMore, kNargsOneOrMore, kNargsRequired, kNargsOptional };
+const CountArgument kNargsZeroOrMore = CountArgument::kNargsZeroOrMore;
+const CountArgument kNargsOneOrMore = CountArgument::kNargsOneOrMore;
+const CountArgument kNargsRequired = CountArgument::kNargsRequired;
+const CountArgument kNargsOptional = CountArgument::kNargsOptional;
+
 
 union BaseTypePointer {
     int64_t *t1;
@@ -99,7 +104,10 @@ ParserNode *MakeParserNode(const char *short_argument, const char *long_argument
 PositionParserNode *MakePositionParserNode(const char *name, const char *help_info);
 
 void AddFlag(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &flag,
-             const char *help_info, bool default_argument = false);
+             const char *help_info = non_info, bool default_argument = false);
+
+void AddFlag(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *flag,
+             const char *help_info = non_info, bool default_argument = false);
 
 ParserNode *AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                                    VariantBase value, const char *help_info = non_info);
@@ -166,8 +174,16 @@ bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, doubl
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value);
 
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int64_t *value);
+
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value);
+
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, double *value);
+
 ArgumentParser CreateParser(const char *name, uint32_t buff_size);
 
 void AddHelp(ArgumentParser &parser);
+
+void PrintHelp(ArgumentParser &parser);
 
 } // namespace nargparse

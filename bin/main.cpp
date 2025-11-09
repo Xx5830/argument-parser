@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <lib/argparser.h>
 
 struct Options {

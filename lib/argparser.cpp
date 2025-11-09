@@ -200,6 +200,11 @@ void nargparse::AddFlag(ArgumentParser &parser, const char *short_argument, cons
     }
 }
 
+void nargparse::AddFlag(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *flag,
+                        const char *help_info, bool default_argument) {
+    AddFlag(parser, short_argument, long_argument, *flag, help_info, default_argument);
+}
+
 nargparse::ParserNode *nargparse::AddArgument(ArgumentParser &parser, const char *short_argument,
                                               const char *long_argument, VariantBase value, const char *help_info) {
     ParserNode *node = GetParserNode(parser, short_argument, long_argument);
@@ -557,8 +562,22 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     return true;
 }
 
-nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buff_size) {
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int64_t *value) {
+    GetRepeated(parser, name, index, *value);
+}
+
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value) {
+    GetRepeated(parser, name, index, *value);
+}
+
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, double *value) {
+    GetRepeated(parser, name, index, *value);
+}
+
+nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buff_size = 1024) {
     return ArgumentParser{name, buff_size};
 }
 
 void nargparse::AddHelp(ArgumentParser &parser) {}
+
+void nargparse::PrintHelp(ArgumentParser &parser) {}
