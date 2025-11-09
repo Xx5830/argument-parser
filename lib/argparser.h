@@ -116,13 +116,13 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &value,
                  bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                 bool (*validation)(const bool &value), const char *help_info);
+                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
-                 bool (*validation)(const double &value), const char *help_info);
+                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double &value,
                  bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
-                 const char *help_info);
+                 const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, char *value,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
@@ -139,13 +139,13 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
                  const char *help_info = non_info);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
-                 bool (*validation)(const int32_t &value), const char *help_info);
+                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                 const char *help_info);
+                 const char *help_info = non_info);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
-                 const char *help_info);
+                 const char *help_info = non_info);
 
 PositionParserNode *AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
                                         CountArgument count_argument = CountArgument::kNargsZeroOrMore,
@@ -162,6 +162,15 @@ void AddArgument(ArgumentParser &parser, double &value, const char *name, CountA
 
 void AddArgument(ArgumentParser &parser, char *value, const char *name, CountArgument count_argument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
+
+void AddArgument(ArgumentParser &parser, int32_t *value, const char *name, CountArgument count_argument,
+                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
+
+void AddArgument(ArgumentParser &parser, bool *value, const char *name, CountArgument count_argument,
+                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
+
+void AddArgument(ArgumentParser &parser, double *value, const char *name, CountArgument count_argument,
+                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
 
 void MarkFlags(ParserNode *node);
 

@@ -358,6 +358,26 @@ void nargparse::AddArgument(ArgumentParser &parser, char *value, const char *nam
     node->validation_string = validation;
 }
 
+//---
+
+void nargparse::AddArgument(ArgumentParser &parser, int32_t *value, const char *name, CountArgument count_argument,
+    bool (*validation)(const int32_t &value), const char *help_info) {
+        AddArgument(parser, *value, name, count_argument);
+}
+
+void nargparse::AddArgument(ArgumentParser &parser, bool *value, const char *name, CountArgument count_argument,
+    bool (*validation)(const bool &value), const char *help_info) {
+        AddArgument(parser, *value, name, count_argument);
+}
+
+void nargparse::AddArgument(ArgumentParser &parser, double *value, const char *name, CountArgument count_argument,
+    bool (*validation)(const double &value), const char *help_info) {
+        AddArgument(parser, *value, name, count_argument);
+}
+
+
+//--
+
 void nargparse::MarkFlags(ParserNode *node) {
     FlagNode *current = node->begin_flag;
     while (current) {
