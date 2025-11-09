@@ -82,7 +82,7 @@ bool FTrueDouble(const double &value) { return true; }
 bool FTrueBool(const bool &value) { return true; }
 bool FTrueString(const char *const &value) { return true; }
 
-char *non_info = "empty info";
+const char *non_info = "empty info";
 CountArgument default_count_argument = CountArgument::kNargsRequired;
 
 bool EqualString(const char *left, const char *right);

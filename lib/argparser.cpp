@@ -563,15 +563,15 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int64_t *value) {
-    GetRepeated(parser, name, index, *value);
+    return GetRepeated(parser, name, index, *value);
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value) {
-    GetRepeated(parser, name, index, *value);
+    return GetRepeated(parser, name, index, *value);
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, double *value) {
-    GetRepeated(parser, name, index, *value);
+    return GetRepeated(parser, name, index, *value);
 }
 
 nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buff_size = 1024) {
