@@ -115,7 +115,11 @@ bool nargparse::WritePositionArgument(ParserNode *node, const char *new_arg) {
             node->size++;
 
             if (node->begin_result == nullptr) {
-                *node->place_save_first.element.t4 = *new_variant.element.t4;
+                for (uint32_t index = 0; index < 128; index++){
+                    (*node->place_save_first.element.t4)[index] = (*new_variant.element.t4)[index];
+                }
+                
+                //*node->place_save_first.element.t4 = *new_variant.element.t4;
                 node->begin_result = node->prev_end_result = new BaseNode{nullptr, new_variant};
             } else {
                 node->prev_end_result = node->prev_end_result->next = new BaseNode{nullptr, new_variant};
@@ -499,7 +503,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 if (!current_position_node) {
                     return false;
                 }
-                result_parsing &= SetValues(current_position_node, argv[index_argv]);
+                //result_parsing &= SetValues(current_position_node, argv[index_argv]);
                 result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
 
                 if (current_position_node->count_argument == CountArgument::kNargsRequired ||
