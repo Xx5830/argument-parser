@@ -69,6 +69,9 @@ struct ParserNode {
 struct ArgumentParser {
     const char *name;
     uint32_t buff_size;
+    char *help = nullptr;
+    uint32_t size_help = 0;
+    bool was_help = 0;
 
     ParserNode *begin;
     ParserNode *prev_end;
@@ -151,7 +154,7 @@ void MarkFlags(ParserNode *node);
 
 bool SetValues(ParserNode *node, const char *value);
 
-ParserNode* GetNextPositionArgument(ParserNode *current);
+ParserNode *GetNextPositionArgument(ParserNode *current);
 
 bool Parse(ArgumentParser &parser, uint32_t argc, const char **argv);
 
@@ -182,6 +185,8 @@ ArgumentParser CreateParser(const char *name, uint32_t buff_size = 1024);
 void AddHelp(ArgumentParser &parser);
 
 void PrintHelp(ArgumentParser &parser);
+
+void SetHelp(ArgumentParser &parser);
 
 } // namespace nargparse
 

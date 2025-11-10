@@ -546,7 +546,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 };
             } else {
                 if (!current_position_node) {
-                    if (need_free){
+                    if (need_free) {
                         delete[] str;
                     }
                     return false;
@@ -572,8 +572,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
         if (node->count_argument == CountArgument::kNargsRequired && node->size != 1) {
             result_parsing = false;
             break;
-        }
-        else if (node->count_argument == CountArgument::kNargsOptional && node->size > 1){
+        } else if (node->count_argument == CountArgument::kNargsOptional && node->size > 1) {
             result_parsing = false;
             break;
         } else if (node->count_argument == CountArgument::kNargsOneOrMore && node->size == 0) {
@@ -589,7 +588,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 void nargparse::FreeBaseList(BaseNode *node) {
     while (node) {
         BaseNode *next = node->next;
-        if (node->element.type == VariantBase::BaseEnum::kString){
+        if (node->element.type == VariantBase::BaseEnum::kString) {
             delete node->element.element.t4;
         }
         delete node;
@@ -601,24 +600,24 @@ void nargparse::FreeResultBaseList(BaseNode *node) {
     while (node) {
         BaseNode *next = node->next;
         switch (node->element.type) {
-            case VariantBase::BaseEnum::kInt: {
-                delete node->element.element.t1;
-                break;
-            }
-            case VariantBase::BaseEnum::kFloat: {
-                delete node->element.element.t3;
-                break;
-            }
-            case VariantBase::BaseEnum::kString: {
-                delete[] (*node->element.element.t4);
-                delete node->element.element.t4;
-                break;
-            }
-            case VariantBase::BaseEnum::kBool: {
-                delete node->element.element.t2;
-                break;
-            }
-            }
+        case VariantBase::BaseEnum::kInt: {
+            delete node->element.element.t1;
+            break;
+        }
+        case VariantBase::BaseEnum::kFloat: {
+            delete node->element.element.t3;
+            break;
+        }
+        case VariantBase::BaseEnum::kString: {
+            delete[] (*node->element.element.t4);
+            delete node->element.element.t4;
+            break;
+        }
+        case VariantBase::BaseEnum::kBool: {
+            delete node->element.element.t2;
+            break;
+        }
+        }
         delete node;
         node = next;
     }
@@ -644,7 +643,12 @@ void nargparse::FreeArguments(ArgumentParser &parser) {
     }
 }
 
-void nargparse::FreeParser(ArgumentParser &parser) { FreeArguments(parser); }
+void nargparse::FreeParser(ArgumentParser &parser) {
+    FreeArguments(parser);
+    delete[] parser.help;
+    parser.buff_size = 0;
+    parser.size_help = 0;
+}
 
 uint32_t nargparse::GetRepeatedCount(ArgumentParser &parser, const char *name) {
     ParserNode *node = GetParserNameNode(parser, name);
@@ -758,14 +762,22 @@ nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buf
     return ArgumentParser{name, buff_size};
 }
 
-void nargparse::AddHelp(ArgumentParser &parser) {
-    int a = 5;
-    AddArgument(parser, "-h", "--help", &a, "help_info");
-}
+void nargparse::AddHelp(ArgumentParser &parser) { AddArgument(parser, "-h", "--help", &parser.was_help, "help_info"); }
 
 void nargparse::PrintHelp(ArgumentParser &parser) {
-    /* const char* name;
-    GetRepeated(parser, "names", 0, &name); */
+    for (uint32_t i = 0; i < parser.size_help; i++) {
+        std::cout << parser.help[i];
+    }
+}
+
+void nargparse::SetHelp(ArgumentParser &parser, char *help, uint32_t size) {
+    delete[] parser.help;
+    parser.help = new char[size];
+    parser.size_help = size;
+
+    for (uint32_t index = 0; index < size; index++) {
+        help[index] = help[index];
+    }
 }
 
 // Вывод хелпы добавить не забудь
