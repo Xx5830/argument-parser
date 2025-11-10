@@ -105,6 +105,7 @@ bool nargparse::WritePositionArgument(ParserNode *node, const char *new_arg) {
     case VariantBase::BaseEnum::kString: {
         if (node->validation_string(new_arg)) {
             VariantBase new_variant;
+            new_variant.element.t4 = new char*;
             *new_variant.element.t4 = new char[kBuffSize]{'\0'};
             for (uint32_t index = 0; index < 128 && new_arg[index] != '\0'; index++) {
                 (*new_variant.element.t4)[index] = new_arg[index];
@@ -226,11 +227,13 @@ nargparse::ParserNode *nargparse::AddArgument(ArgumentParser &parser, const char
     ParserNode *node = GetParserNode(parser, short_argument, long_argument);
 
     if (node != nullptr) {
+        node->place_save_first = value;
         ExpandBaseList(node, value);
         return node;
     } else {
         ExpandParserList(parser, MakeParserNode(short_argument, long_argument, help_info));
         ExpandBaseList(parser.prev_end, value);
+        parser.prev_end->place_save_first = value;
         return parser.prev_end;
     }
 }
@@ -483,14 +486,13 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
         } else {
             if (inf_node != nullptr) {
-                ++inf_node->size;
                 const char *argument = argv[index_argv];
 
                 result_parsing &= SetValues(inf_node, argument);
                 result_parsing &= WritePositionArgument(inf_node, argument);
 
-                if (current_position_node->count_argument == CountArgument::kNargsRequired ||
-                    current_position_node->count_argument == CountArgument::kNargsOptional) {
+                if (inf_node->count_argument == CountArgument::kNargsRequired ||
+                    inf_node->count_argument == CountArgument::kNargsOptional) {
                     inf_node = nullptr;
                 };
             } else {
