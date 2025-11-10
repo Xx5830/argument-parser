@@ -183,7 +183,7 @@ void FreeParser(ArgumentParser &parser);
 
 uint32_t GetRepeatedCount(ArgumentParser &parser, const char *name);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, char *value);
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, char **value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value);
 
