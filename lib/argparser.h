@@ -185,12 +185,6 @@ void FreeParser(ArgumentParser &parser);
 
 uint32_t GetRepeatedCount(ArgumentParser &parser, const char *name);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t &value);
-
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool &value);
-
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, float &value);
-
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value);
@@ -199,10 +193,12 @@ bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool 
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, float *value);
 
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char **value);
+
 ArgumentParser CreateParser(const char *name, uint32_t buff_size = 1024);
 
 void AddHelp(ArgumentParser &parser);
 
 void PrintHelp(ArgumentParser &parser);
-
+    
 } // namespace nargparse
