@@ -644,7 +644,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     return true;
 }
 
-bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, char** value) {
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char** value) {
     PositionParserNode *node = GetPositionParserNode(parser, name);
     if (!node) {
         return false;
@@ -658,12 +658,12 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
         }
     }
 
-    //value = current_value->element.element.t4;
-    uint32_t i = 0;
+    *value = *current_value->element.element.t4;
+    /* uint32_t i = 0;
     for (; (*current_value->element.element.t4)[i] != '\0' && i < 127; i++){
         (*value)[i] = (*current_value->element.element.t4)[i];
     }
-    (*value)[i] = (*current_value->element.element.t4)[i];
+    (*value)[i] = (*current_value->element.element.t4)[i]; */
 
     return true;
 }
