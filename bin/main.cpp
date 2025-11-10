@@ -12,7 +12,7 @@ bool IsEven(const int& value) {
 }
 
 int main(int argc, char** argv) {
-    Options options;
+    /* Options options;
     int value;
     std::vector<int> values;
 
@@ -53,5 +53,5 @@ int main(int argc, char** argv) {
 
     std::cout << "Result: " << result << std::endl;
 
-    return 0;
+    return 0; */
 }
