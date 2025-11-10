@@ -186,7 +186,7 @@ void AddHelp(ArgumentParser &parser);
 
 void PrintHelp(ArgumentParser &parser);
 
-void SetHelp(ArgumentParser &parser);
+void SetHelp(ArgumentParser &parser, char *help, uint32_t size);
 
 } // namespace nargparse
 
