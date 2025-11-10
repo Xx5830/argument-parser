@@ -552,7 +552,11 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 
     ParserNode *node = parser.begin;
     while (node) {
-        if (node->count_argument == CountArgument::kNargsRequired && node->size == 0) {
+        if (node->count_argument == CountArgument::kNargsRequired && node->size != 1) {
+            result_parsing = false;
+            break;
+        }
+        else if (node->count_argument == CountArgument::kNargsOptional && node->size > 1){
             result_parsing = false;
             break;
         }
