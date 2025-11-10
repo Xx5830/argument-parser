@@ -155,9 +155,9 @@ void AddArgument(ArgumentParser &parser, bool *value, const char *name,
 void AddArgument(ArgumentParser &parser, double *value, const char *name,
                  CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *value, const char *name, CountArgument count_argument,
+void AddArgument(ArgumentParser &parser, const char *value, const char *name, CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name, CountArgument count_argument,
+void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name, CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
 void MarkFlags(ParserNode *node);
