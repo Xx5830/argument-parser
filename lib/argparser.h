@@ -131,16 +131,21 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
                  const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
-                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument,
+                 bool (*validation)(const int32_t &value) = FTrueInt);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument,
+                 bool (*validation)(const bool &value) = FTrueBool);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
-                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument,
+                 bool (*validation)(const double &value) = FTrueDouble);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
-                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument,
+                 bool (*validation)(const char *const &value) = FTrueString);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                  char (*value)[kBuffSize], const char *help_info = non_info,
-                 CountArgument count_argument = kDefaultCountArgument);
+                 CountArgument count_argument = kDefaultCountArgument,
+                 bool (*validation)(const char *const &value) = FTrueString);
 
 PositionParserNode *AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
                                         CountArgument count_argument = kDefaultCountArgument,
@@ -155,9 +160,11 @@ void AddArgument(ArgumentParser &parser, bool *value, const char *name,
 void AddArgument(ArgumentParser &parser, double *value, const char *name,
                  CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *value, const char *name, CountArgument count_argument = kDefaultCountArgument,
+void AddArgument(ArgumentParser &parser, const char *value, const char *name,
+                 CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name, CountArgument count_argument = kDefaultCountArgument,
+void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name,
+                 CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
 void MarkFlags(ParserNode *node);
