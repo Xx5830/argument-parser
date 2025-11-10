@@ -563,7 +563,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
         }
     }
 
-    value = current_value->element.element.t1;
+    *value = *current_value->element.element.t1;
     return true;
 }
 
@@ -581,7 +581,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
         }
     }
 
-    value = current_value->element.element.t2;
+    *value = *current_value->element.element.t2;
     return true;
 }
 
@@ -599,7 +599,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
         }
     }
 
-    value = current_value->element.element.t3;
+    *value = *current_value->element.element.t3;
     return true;
 }
 

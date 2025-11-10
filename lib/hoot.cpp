@@ -17,5 +17,6 @@ int main(){
     for (int i = 0; i < count; ++i) {
         int value;
         flag_true = (nargparse::GetRepeated(parser, "Numbers", i, &value));
+        std::cout << value << std::endl;
     }
 }
