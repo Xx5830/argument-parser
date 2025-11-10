@@ -470,9 +470,40 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
     }
 
     ParserNode *inf_node = nullptr;
+    bool need_free = 0;
 
     for (uint32_t index_argv = 1; result_parsing && index_argv < argc; index_argv++) {
-        ParserNode *node = GetParserNode(parser, argv[index_argv]);
+        const char* str = argv[index_argv];
+        ParserNode *node = GetParserNode(parser, str);
+        if (!node){
+            int ind = -1;
+            uint32_t str_size = 0;
+            for (; str[str_size] != '\0'; str_size++){
+                if (ind == -1 && str[str_size] == '='){
+                    ind = str_size;
+                }
+            }
+
+            if (ind != -1){
+                need_free = 1;
+
+                char* left = new char[ind + 1];
+                left[ind] = '\0';
+                for (uint32_t i = 0; i < ind; i++){
+                    left[i] = str[i];
+                }
+                char* right = new char[str_size - ind];
+                right[str_size - ind - 1] = '\0';
+
+                for (uint32_t i = ind + 1; i < str_size; i++){
+                    right[i - ind - 1] = str[i];
+                }
+
+                inf_node = GetParserNode(parser, left);
+                delete[] left;
+                str = right;
+            }
+        }
 
         if (node) {
             inf_node = nullptr;
@@ -490,7 +521,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
         } else {
             if (inf_node != nullptr) {
-                const char *argument = argv[index_argv];
+                const char *argument = str;
 
                 //result_parsing &= SetValues(inf_node, argument);
                 result_parsing &= WritePositionArgument(inf_node, argument);
@@ -503,14 +534,19 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 if (!current_position_node) {
                     return false;
                 }
-                //result_parsing &= SetValues(current_position_node, argv[index_argv]);
-                result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
+                //result_parsing &= SetValues(current_position_node, str);
+                result_parsing &= WritePositionArgument(current_position_node, str);
 
                 if (current_position_node->count_argument == CountArgument::kNargsRequired ||
                     current_position_node->count_argument == CountArgument::kNargsOptional) {
                     current_position_node = GetNextPositionArgument(current_position_node);
                 }
             }
+        }
+    
+        if (need_free){
+            delete[] str;
+            need_free = false;
         }
     }
 
