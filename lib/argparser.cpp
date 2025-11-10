@@ -586,6 +586,9 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 void nargparse::FreeBaseList(BaseNode *node) {
     while (node) {
         BaseNode *next = node->next;
+        if (next->element.type == VariantBase::BaseEnum::kString){
+            delete next->element.element.t4;
+        }
         delete node;
         node = next;
     }
