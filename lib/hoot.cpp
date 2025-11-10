@@ -6,17 +6,30 @@ using namespace nargparse;
 int main(){
     ArgumentParser parser = CreateParser("BigParser");
 
-    int first_value = 0;
+    bool verbose = false;
+    bool quiet = false;
+    int first_number = 0;
 
-    nargparse::AddArgument(parser, &first_value, "Numbers", nargparse::kNargsOneOrMore);
+    nargparse::AddFlag(parser, "-v", "--verbose", &verbose, "Verbose output");
+    nargparse::AddFlag(parser, "-q", "--quiet", &quiet, "Quiet output");
 
-    const char* argv[] = {"program", "1", "2", "3", "4", "5"};
-    bool flag_true = nargparse::Parse(parser, 6, argv);
+    nargparse::AddArgument(parser, &first_number, "Numbers", nargparse::kNargsZeroOrMore);
+
+    const char* argv[] = {"program", "-v", "10", "20", "30"};
+    EXPECT_TRUE(nargparse::Parse(parser, 5, argv));
+
+    EXPECT_TRUE(verbose);
+    EXPECT_FALSE(quiet);
+    EXPECT_EQ(first_number, 10);
 
     int count = nargparse::GetRepeatedCount(parser, "Numbers");
-    for (int i = 0; i < count; ++i) {
-        int value;
-        flag_true = (nargparse::GetRepeated(parser, "Numbers", i, &value));
-        std::cout << value << std::endl;
-    }
+    EXPECT_EQ(count, 3);
+
+    int val;
+    EXPECT_TRUE(nargparse::GetRepeated(parser, "Numbers", 0, &val));
+    EXPECT_EQ(val, 10);
+    EXPECT_TRUE(nargparse::GetRepeated(parser, "Numbers", 1, &val));
+    EXPECT_EQ(val, 20);
+    EXPECT_TRUE(nargparse::GetRepeated(parser, "Numbers", 2, &val));
+    EXPECT_EQ(val, 30);
 }

@@ -1,5 +1,6 @@
 #include "argparser.h"
 #include <cstdlib>
+#include <iostream>
 
 bool nargparse::EqualString(const char *left, const char *right) {
     if (!left || !right) {
@@ -447,6 +448,15 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
         ParserNode *node = GetParserNode(parser, argv[index_argv]);
 
         if (node) {
+            if (EqualString(node->short_argument, "-h")){
+                if (node->was_info == 0){
+                    std::cout << "There help" << std::endl;
+                }
+
+                node->was_info = 1;
+                continue;
+            }
+
             node->was_info = 1;
             ++index_argv;
             const char *argument = argv[index_argv];
@@ -643,9 +653,16 @@ nargparse::ArgumentParser nargparse::CreateParser(const char *name, uint32_t buf
     return ArgumentParser{name, buff_size};
 }
 
-void nargparse::AddHelp(ArgumentParser &parser) {}
+void nargparse::AddHelp(ArgumentParser &parser) {
+    int a = 5;
+    AddArgument(parser, "-h", "--help", &a, "help_info");
+}
 
 void nargparse::PrintHelp(ArgumentParser &parser) {
     /* const char* name;
     GetRepeated(parser, "names", 0, &name); */
 }
+
+
+
+//Вывод хелпы добавить не забудь
