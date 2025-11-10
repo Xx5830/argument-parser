@@ -87,8 +87,9 @@ void ExpandParserList(ArgumentParser &parser, ParserNode *element);
 
 bool WritePositionArgument(ParserNode *node, const char *new_arg);
 
-ParserNode *GetParserNode(ArgumentParser &parser, const char *short_argument, const char *long_argument);
-ParserNode *GetParserNode(ArgumentParser &parser, const char *name);
+ParserNode *GetParserNode(ArgumentParser &parser, const char *arg);
+nargparse::ParserNode *GetParserNode(ArgumentParser &parser, const char *short_argument, const char *long_argument);
+ParserNode *GetParserNameNode(ArgumentParser &parser, const char *name);
 
 ParserNode *MakeParserNode(const char *short_argument, const char *long_argument, const char *help_info);
 ParserNode *MakeParserNode(const char *name, const char *help_info);
@@ -150,7 +151,7 @@ void MarkFlags(ParserNode *node);
 
 bool SetValues(ParserNode *node, const char *value);
 
-void NextPositionArgument(ParserNode *current);
+ParserNode* GetNextPositionArgument(ParserNode *current);
 
 bool Parse(ArgumentParser &parser, uint32_t argc, const char **argv);
 

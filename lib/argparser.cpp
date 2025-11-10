@@ -152,8 +152,18 @@ bool nargparse::WritePositionArgument(ParserNode *node, const char *new_arg) {
     return result_write;
 }
 
-nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const char *short_argument,
-                                                const char *long_argument) {
+nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const char *arg) {
+    ParserNode *current = parser.begin;
+
+    while (current && !EqualString(current->short_argument, arg) &&
+           !EqualString(current->long_argument, arg)) {
+        current = current->next;
+    }
+
+    return current;
+}
+
+nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const char *short_argument, const char* long_argument) {
     ParserNode *current = parser.begin;
 
     while (current && !EqualString(current->short_argument, short_argument) &&
@@ -164,10 +174,10 @@ nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const ch
     return current;
 }
 
-nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const char *name) {
+nargparse::ParserNode *nargparse::GetParserNameNode(ArgumentParser &parser, const char *name) {
     ParserNode *current = parser.begin;
 
-    while (current && !EqualString(current->short_argument, name) && !EqualString(current->long_argument, name)) {
+    while (current && !EqualString(current->name, name)) {
         current = current->next;
     }
 
@@ -303,7 +313,7 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 
 nargparse::ParserNode *nargparse::AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
                                                       CountArgument count_argument, const char *help_info) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
 
     if (node != nullptr) {
         node->place_save_first = value;
@@ -431,23 +441,25 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
     return validation_result;
 }
 
-void nargparse::NextPositionArgument(ParserNode *current) {
+nargparse::ParserNode* nargparse::GetNextPositionArgument(ParserNode *current) {
     while (current) {
         current = current->next;
 
         if (current->short_argument == nullptr && current->long_argument == nullptr) {
-            return;
+            return current;
         }
     }
 
-    return;
+    return current;
 }
 
 bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) {
+    //free node result
+
     bool result_parsing = true;
     ParserNode *current_position_node = parser.begin;
-    if (current_position_node->short_argument != nullptr || current_position_node->long_argument != nullptr) {
-        NextPositionArgument(current_position_node);
+    if (current_position_node && (current_position_node->short_argument != nullptr || current_position_node->long_argument != nullptr)) {
+        current_position_node = GetNextPositionArgument(current_position_node);
     }
 
     ParserNode *inf_node = nullptr;
@@ -471,10 +483,11 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
         } else {
             if (inf_node != nullptr) {
-                ++node->size;
+                ++inf_node->size;
                 const char *argument = argv[index_argv];
 
-                result_parsing &= SetValues(node, argument);
+                result_parsing &= SetValues(inf_node, argument);
+                result_parsing &= WritePositionArgument(inf_node, argument);
 
                 if (current_position_node->count_argument == CountArgument::kNargsRequired ||
                     current_position_node->count_argument == CountArgument::kNargsOptional) {
@@ -484,12 +497,11 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 if (!current_position_node) {
                     return false;
                 }
-
                 result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
 
                 if (current_position_node->count_argument == CountArgument::kNargsRequired ||
                     current_position_node->count_argument == CountArgument::kNargsOptional) {
-                    NextPositionArgument(current_position_node);
+                    current_position_node = GetNextPositionArgument(current_position_node);
                 }
             }
         }
@@ -501,7 +513,6 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             result_parsing = false;
             break;
         }
-        node->size = 0;
         node = node->next;
     }
 
@@ -539,14 +550,14 @@ void nargparse::FreeArguments(ArgumentParser &parser) {
 void nargparse::FreeParser(ArgumentParser &parser) { FreeArguments(parser); }
 
 uint32_t nargparse::GetRepeatedCount(ArgumentParser &parser, const char *name) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     uint32_t result = node->size;
 
     return result;
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     if (!node) {
         return false;
     }
@@ -565,7 +576,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     if (!node) {
         return false;
     }
@@ -583,7 +594,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     if (!node) {
         return false;
     }
@@ -601,7 +612,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, float *value) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     if (!node) {
         return false;
     }
@@ -619,7 +630,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char **value) {
-    ParserNode *node = GetParserNode(parser, name);
+    ParserNode *node = GetParserNameNode(parser, name);
     if (!node) {
         return false;
     }
