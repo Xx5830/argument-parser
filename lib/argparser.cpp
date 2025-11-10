@@ -6,14 +6,14 @@ bool nargparse::IsInt(const char *str) {
     char **pos;
     strtol(str, pos, 0);
 
-    return **pos == '\0';
+    return (pos == nullptr) || (**pos == '\0'); 
 }
 
 bool nargparse::IsFloat(const char *str) {
     char **pos;
     strtod(str, pos);
 
-    return **pos == '\0';
+    return (pos == nullptr) || (**pos == '\0'); 
 }
 
 bool nargparse::EqualString(const char *left, const char *right) {

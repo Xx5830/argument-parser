@@ -20,8 +20,6 @@ bool IsInt(const char* str);
 
 bool IsFloat(const char* str);
 
-bool IsBool(const char* str);
-
 union BaseTypePointer {
     int32_t *t1;
     bool *t2;
