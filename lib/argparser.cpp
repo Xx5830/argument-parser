@@ -443,10 +443,11 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
     bool result_parsing = true;
     PositionParserNode *current_position_node = parser.begin_pos;
 
-    for (uint32_t index_argv = 0; result_parsing && index_argv < argc; index_argv++) {
+    for (uint32_t index_argv = 1; result_parsing && index_argv < argc; index_argv++) {
         ParserNode *node = GetParserNode(parser, argv[index_argv]);
 
         if (node) {
+            node->was_info = 1;
             ++index_argv;
             const char *argument = argv[index_argv];
 
@@ -484,6 +485,16 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
             current_position_node = current_position_node->next;
         }
+    }
+
+    ParserNode* node = parser.begin;
+    while (node){
+        if (node->count_argument == CountArgument::kNargsRequired && node->was_info == 0){
+            result_parsing = false;
+            break;
+        }
+        node->was_info = 0;
+        node = node->next;
     }
 
     return result_parsing;

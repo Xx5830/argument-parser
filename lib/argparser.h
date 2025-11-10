@@ -55,6 +55,8 @@ struct ParserNode {
     bool (*validation_string)(const char *const &value) = nullptr;
     CountArgument count_argument = kDefaultCountArgument;
     const char* name = nullptr;
+
+    bool was_info = false;
 };
 
 struct PositionParserNode {
