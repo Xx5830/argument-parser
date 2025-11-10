@@ -10,7 +10,7 @@ const CountArgument kNargsZeroOrMore = CountArgument::kNargsZeroOrMore; // 0-inf
 const CountArgument kNargsOneOrMore = CountArgument::kNargsOneOrMore;   // 1-inf
 const CountArgument kNargsRequired = CountArgument::kNargsRequired;     // 1-1
 const CountArgument kNargsOptional = CountArgument::kNargsOptional;     // 0-1
-const CountArgument kDefaultcountArgument = CountArgument::kNargsOptional;
+const CountArgument kDefaultCountArgument = CountArgument::kNargsOptional;
 
 union BaseTypePointer {
     int32_t *t1;
@@ -49,6 +49,7 @@ struct ParserNode {
     bool (*validation_double)(const double &value) = nullptr;
     bool (*validation_bool)(const bool &value) = nullptr;
     bool (*validation_string)(const char *const &value) = nullptr;
+    CountArgument count_argument = kDefaultCountArgument;
 };
 
 struct PositionParserNode {
@@ -113,69 +114,49 @@ void AddFlag(ArgumentParser &parser, const char *short_argument, const char *lon
 ParserNode *AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                         VariantBase value, const char *help_info = non_info);
 
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t &value,
-                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &value,
-                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double &value,
-                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
-                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
-
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t &value,
-                 const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool &value,
-                 const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double &value,
-                 const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
-                 const char *help_info = non_info);
-
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
-                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
+                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info,
+                 CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
+                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info,
+                 CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
-                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
+                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info,
+                 CountArgument count_argument = kDefaultCountArgument);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
+                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info,
+                 CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                  char (*value)[kBuffSize], bool (*validation)(const char *const &value) = FTrueString,
-                 const char *help_info = non_info);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, int32_t *value,
-                 const char *help_info = non_info);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                 const char *help_info = non_info);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, double *value,
-                 const char *help_info = non_info);
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
+void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
+                 const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
-                 char (*value)[kBuffSize], const char *help_info = non_info);
+                 char (*value)[kBuffSize], const char *help_info = non_info,
+                 CountArgument count_argument = kDefaultCountArgument);
 
 PositionParserNode *AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
-                                        CountArgument count_argument = kDefaultcountArgument,
+                                        CountArgument count_argument = kDefaultCountArgument,
                                         const char *help_info = non_info);
 
-void AddArgument(ArgumentParser &parser, int32_t &value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
-                 bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, bool &value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
-                 bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, double &value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
-                 bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
-                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
-
 void AddArgument(ArgumentParser &parser, int32_t *value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
+                 CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const int32_t &value) = FTrueInt, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, bool *value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
+                 CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const bool &value) = FTrueBool, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, double *value, const char *name,
-                 CountArgument count_argument = kDefaultcountArgument,
+                 CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const double &value) = FTrueDouble, const char *help_info = non_info);
+void AddArgument(ArgumentParser &parser, const char *value, const char *name, CountArgument count_argument,
+                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name, CountArgument count_argument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 
