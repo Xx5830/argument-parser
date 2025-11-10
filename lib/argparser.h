@@ -1,17 +1,20 @@
-#pragma once
-
 #include <cstdint>
 #include <utility>
 
+#ifndef __THIS_ARG_PARSER_H
+ #define __THIS_ARG_PARSER_H  1
 namespace nargparse {
 
 enum class CountArgument { kNargsZeroOrMore, kNargsOneOrMore, kNargsRequired, kNargsOptional };
-const CountArgument kNargsZeroOrMore = CountArgument::kNargsZeroOrMore; // 0-inf
-const CountArgument kNargsOneOrMore = CountArgument::kNargsOneOrMore;   // 1-inf
-const CountArgument kNargsRequired = CountArgument::kNargsRequired;     // 1-1
-const CountArgument kNargsOptional = CountArgument::kNargsOptional;     // 0-1
-const CountArgument kDefaultCountArgument = CountArgument::kNargsOptional;
-const char *kDefName = "empty name";
+
+inline const CountArgument kNargsZeroOrMore = CountArgument::kNargsZeroOrMore; // 0-inf
+inline const CountArgument kNargsOneOrMore = CountArgument::kNargsOneOrMore;   // 1-inf
+inline const CountArgument kNargsRequired = CountArgument::kNargsRequired;     // 1-1
+inline const CountArgument kNargsOptional = CountArgument::kNargsOptional;     // 0-1
+inline const CountArgument kDefaultCountArgument = CountArgument::kNargsOptional;
+inline const char *kDefName = "empty name";
+inline const char *non_info = "empty info";
+inline const int32_t kBuffSize = 128;
 
 union BaseTypePointer {
     int32_t *t1;
@@ -70,7 +73,6 @@ struct PositionParserNode {
     bool (*validation_string)(const char *const &value) = nullptr;
 };
 
-const int32_t kBuffSize = 128;
 struct ArgumentParser {
     const char *name;
     uint32_t buff_size;
@@ -85,9 +87,6 @@ bool FTrueInt(const int32_t &value) { return true; }
 bool FTrueFloat(const float &value) { return true; }
 bool FTrueBool(const bool &value) { return true; }
 bool FTrueString(const char *const &value) { return true; }
-
-const char *non_info = "empty info";
-CountArgument default_count_argument = CountArgument::kNargsRequired;
 
 bool EqualString(const char *left, const char *right);
 
@@ -204,3 +203,5 @@ void AddHelp(ArgumentParser &parser);
 void PrintHelp(ArgumentParser &parser);
     
 } // namespace nargparse
+
+#endif
