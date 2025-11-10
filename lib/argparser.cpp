@@ -499,6 +499,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 if (!current_position_node) {
                     return false;
                 }
+                result_parsing &= SetValues(current_position_node, argv[index_argv]);
                 result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
 
                 if (current_position_node->count_argument == CountArgument::kNargsRequired ||
