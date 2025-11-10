@@ -546,6 +546,9 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 };
             } else {
                 if (!current_position_node) {
+                    if (need_free){
+                        delete[] str;
+                    }
                     return false;
                 }
                 // result_parsing &= SetValues(current_position_node, str);
@@ -586,8 +589,8 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 void nargparse::FreeBaseList(BaseNode *node) {
     while (node) {
         BaseNode *next = node->next;
-        if (next->element.type == VariantBase::BaseEnum::kString){
-            delete next->element.element.t4;
+        if (node->element.type == VariantBase::BaseEnum::kString){
+            delete node->element.element.t4;
         }
         delete node;
         node = next;
