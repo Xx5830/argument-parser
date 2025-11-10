@@ -471,6 +471,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 
     ParserNode *inf_node = nullptr;
     bool need_free = 0;
+    bool funny_stupid_flag = true;
 
     for (uint32_t index_argv = 1; result_parsing && index_argv < argc; index_argv++) {
         const char* str = argv[index_argv];
@@ -479,7 +480,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             ++size_str;
         }
 
-        if (size_str > kBuffSize){
+        if (size_str >= kBuffSize){
             return false;
         }
 
@@ -515,7 +516,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
         }
 
-        if (node) {
+        if (funny_stupid_flag && node) {
             inf_node = nullptr;
             if (EqualString(node->short_argument, "-h")) {
                 if (node->size == 0) {
@@ -527,9 +528,11 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             MarkFlags(node);
 
             if (node->begin_base) {
+                funny_stupid_flag = false;
                 inf_node = node;
             }
         } else {
+            funny_stupid_flag = true;
             if (inf_node != nullptr) {
                 const char *argument = str;
 
