@@ -571,6 +571,30 @@ uint32_t nargparse::GetRepeatedCount(ArgumentParser &parser, const char *name) {
     return result;
 }
 
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, char *value) {
+    PositionParserNode *node = GetPositionParserNode(parser, name);
+    if (!node) {
+        return false;
+    }
+    BaseNode *current_value = node->begin_result;
+
+    for (uint32_t k = 0; k < index; k++) {
+        current_value = current_value->next;
+        if (!current_value) {
+            return false;
+        }
+    }
+
+    //value = current_value->element.element.t4;
+    uint32_t i = 0;
+    for (; (*current_value->element.element.t4)[i] != '\0' && i < 127; i++){
+        value[i] = (*current_value->element.element.t4)[i];
+    }
+    value[i] = (*current_value->element.element.t4)[i];
+
+    return true;
+}
+
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value) {
     PositionParserNode *node = GetPositionParserNode(parser, name);
     if (!node) {
@@ -641,7 +665,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 
     //value = current_value->element.element.t4;
     uint32_t i = 0;
-    for (; (*current_value->element.element.t4)[i]; i++){
+    for (; (*current_value->element.element.t4)[i] != '\0' && i < 127; i++){
         (*value)[i] = (*current_value->element.element.t4)[i];
     }
     (*value)[i] = (*current_value->element.element.t4)[i];
