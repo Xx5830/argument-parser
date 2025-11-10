@@ -2,6 +2,20 @@
 #include <cstdlib>
 #include <iostream>
 
+bool nargparse::IsInt(const char *str) { 
+    char **pos;
+    strtol(str, pos, 0);
+
+    return **pos == '\0';
+}
+
+bool nargparse::IsFloat(const char *str) {
+    char **pos;
+    strtod(str, pos);
+
+    return **pos == '\0';
+}
+
 bool nargparse::EqualString(const char *left, const char *right) {
     if (!left || !right) {
         return false;
@@ -53,6 +67,9 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
     bool result_write = true;
     switch (node->place_save_first.type) {
     case VariantBase::BaseEnum::kInt: {
+        if (!IsInt(new_arg)){
+            return false;
+        }
         int32_t current = atoll(new_arg);
         if (node->validation_int(current)) {
             VariantBase new_variant;
@@ -72,6 +89,9 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
         break;
     }
     case VariantBase::BaseEnum::kFloat: {
+        if (!IsFloat(new_arg)){
+            return false;
+        }
         float current = atof(new_arg);
         if (node->validation_float(current)) {
             VariantBase new_variant;
@@ -392,6 +412,10 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
     while (current_node) {
         switch (current_node->element.type) {
         case VariantBase::BaseEnum::kInt: {
+            if (!IsInt(value)){
+                return false;
+            }
+
             int32_t current = atoll(value);
             if (node->validation_int(current)) {
                 *current_node->element.element.t1 = current;
@@ -401,6 +425,9 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
             break;
         }
         case VariantBase::BaseEnum::kFloat: {
+            if (!IsFloat(value)){
+                return false;
+            }
             float current = atof(value);
             if (node->validation_float(current)) {
                 *current_node->element.element.t3 = current;
@@ -421,7 +448,7 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
         }
         case VariantBase::BaseEnum::kBool: {
             bool current = false;
-            if (EqualString(value, "true") || !EqualString(value, "0")) {
+            if (value && (EqualString(value, "true") || !EqualString(value, "0"))) {
                 current = true;
             }
 

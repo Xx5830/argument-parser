@@ -16,6 +16,12 @@ inline const char *kDefName = "empty name";
 inline const char *non_info = "empty info";
 inline const int32_t kBuffSize = 128;
 
+bool IsInt(const char* str);
+
+bool IsFloat(const char* str);
+
+bool IsBool(const char* str);
+
 union BaseTypePointer {
     int32_t *t1;
     bool *t2;
