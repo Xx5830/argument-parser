@@ -297,25 +297,25 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, const char *name, CountArgument count_argument,
                             bool (*validation)(const int32_t &value), const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument, name);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
                             const char *name, CountArgument count_argument, bool (*validation)(const bool &value),
                             const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument, name);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
                             const char *name, CountArgument count_argument, bool (*validation)(const float &value),
                             const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument, name);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             char (*value)[kBuffSize], const char *name, CountArgument count_argument,
                             bool (*validation)(const char *const &value), const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument, name);
 }
 
 nargparse::ParserNode *nargparse::AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
@@ -492,7 +492,7 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             if (inf_node != nullptr) {
                 const char *argument = argv[index_argv];
 
-                result_parsing &= SetValues(inf_node, argument);
+                //result_parsing &= SetValues(inf_node, argument);
                 result_parsing &= WritePositionArgument(inf_node, argument);
 
                 if (inf_node->count_argument == CountArgument::kNargsRequired ||
