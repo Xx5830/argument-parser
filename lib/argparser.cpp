@@ -236,8 +236,8 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                            bool (*validation)(const bool &value), const char *help_info,
-                            CountArgument count_argument, const char *name) {
+                            bool (*validation)(const bool &value), const char *help_info, CountArgument count_argument,
+                            const char *name) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kBool;
     current.element.t2 = value;
@@ -247,9 +247,9 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
     node->name = name;
 }
 
-void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
-                            float *value, bool (*validation)(const float &value), const char *help_info,
-                            CountArgument count_argument, const char *name) {
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
+                            bool (*validation)(const float &value), const char *help_info, CountArgument count_argument,
+                            const char *name) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kFloat;
     current.element.t3 = value;
@@ -291,14 +291,14 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
-                            const char *name, CountArgument count_argument,
-                            bool (*validation)(const bool &value), const char *help_info) {
+                            const char *name, CountArgument count_argument, bool (*validation)(const bool &value),
+                            const char *help_info) {
     AddArgument(parser, short_argument, long_argument, value, validation, help_info);
 }
 
-void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
-                            float *value, const char *name, CountArgument count_argument,
-                            bool (*validation)(const float &value), const char *help_info) {
+void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
+                            const char *name, CountArgument count_argument, bool (*validation)(const float &value),
+                            const char *help_info) {
     AddArgument(parser, short_argument, long_argument, value, validation, help_info);
 }
 
@@ -448,8 +448,8 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
         ParserNode *node = GetParserNode(parser, argv[index_argv]);
 
         if (node) {
-            if (EqualString(node->short_argument, "-h")){
-                if (node->was_info == 0){
+            if (EqualString(node->short_argument, "-h")) {
+                if (node->was_info == 0) {
                     std::cout << "There help" << std::endl;
                 }
 
@@ -458,16 +458,18 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
             }
 
             node->was_info = 1;
-            ++index_argv;
-            const char *argument = argv[index_argv];
+            if (node->begin_base) {
+                ++index_argv;
+                const char *argument = argv[index_argv];
 
-            MarkFlags(node);
-            result_parsing &= SetValues(node, argv[index_argv]);
+                MarkFlags(node);
+                result_parsing &= SetValues(node, argument);
 
-            if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
-                if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
-                    current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
-                    current_position_node = current_position_node->next;
+                if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
+                    if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
+                        current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
+                        current_position_node = current_position_node->next;
+                    }
                 }
             }
         } else {
@@ -497,9 +499,9 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
         }
     }
 
-    ParserNode* node = parser.begin;
-    while (node){
-        if (node->count_argument == CountArgument::kNargsRequired && node->was_info == 0){
+    ParserNode *node = parser.begin;
+    while (node) {
+        if (node->count_argument == CountArgument::kNargsRequired && node->was_info == 0) {
             result_parsing = false;
             break;
         }
@@ -663,6 +665,4 @@ void nargparse::PrintHelp(ArgumentParser &parser) {
     GetRepeated(parser, "names", 0, &name); */
 }
 
-
-
-//Вывод хелпы добавить не забудь
+// Вывод хелпы добавить не забудь

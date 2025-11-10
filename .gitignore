@@ -42,3 +42,5 @@
 
 build
 lib/.vscode
+lib/hoot.cpp
+lib/hoot
