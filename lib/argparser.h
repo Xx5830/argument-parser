@@ -24,7 +24,7 @@ union BaseTypePointer {
     int32_t *t1;
     bool *t2;
     float *t3;
-    const char *t4;
+    char **t4;
 };
 
 struct VariantBase {
@@ -130,9 +130,6 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
                  bool (*validation)(const float &value) = FTrueFloat, const char *help_info = non_info,
                  CountArgument count_argument = kDefaultCountArgument, const char *name = kDefName);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
-                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info,
-                 CountArgument count_argument = kDefaultCountArgument, const char *name = kDefName);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                  char (*value)[kBuffSize], bool (*validation)(const char *const &value) = FTrueString,
                  const char *help_info = non_info, CountArgument count_argument = kDefaultCountArgument, const char *name = kDefName);
@@ -146,9 +143,6 @@ void AddArgument(ArgumentParser &parser, const char *short_argument, const char 
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
                  const char *name = kDefName, CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const float &value) = FTrueFloat, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, const char *value,
-                 const char *name = kDefName, CountArgument count_argument = kDefaultCountArgument,
-                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                  char (*value)[kBuffSize], const char *name = kDefName,
                  CountArgument count_argument = kDefaultCountArgument,
@@ -167,9 +161,6 @@ void AddArgument(ArgumentParser &parser, bool *value, const char *name,
 void AddArgument(ArgumentParser &parser, float *value, const char *name,
                  CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const float &value) = FTrueFloat, const char *help_info = non_info);
-void AddArgument(ArgumentParser &parser, const char *value, const char *name,
-                 CountArgument count_argument = kDefaultCountArgument,
-                 bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
 void AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], const char *name,
                  CountArgument count_argument = kDefaultCountArgument,
                  bool (*validation)(const char *const &value) = FTrueString, const char *help_info = non_info);
@@ -192,15 +183,13 @@ void FreeParser(ArgumentParser &parser);
 
 uint32_t GetRepeatedCount(ArgumentParser &parser, const char *name);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value);
-
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value);
 
 bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, float *value);
 
-bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char **value);
+bool GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, char (*value)[kBuffSize]);
 
 ArgumentParser CreateParser(const char *name, uint32_t buff_size = 1024);
 
