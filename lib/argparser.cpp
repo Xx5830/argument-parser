@@ -474,13 +474,22 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
 
     for (uint32_t index_argv = 1; result_parsing && index_argv < argc; index_argv++) {
         const char* str = argv[index_argv];
+        uint32_t size_str = 0;
+        while (str[size_str] != '\0'){
+            ++size_str;
+        }
+
+        if (size_str > kBuffSize){
+            return false;
+        }
+
         ParserNode *node = GetParserNode(parser, str);
         if (!node){
             int ind = -1;
-            uint32_t str_size = 0;
-            for (; str[str_size] != '\0'; str_size++){
-                if (ind == -1 && str[str_size] == '='){
-                    ind = str_size;
+            for (uint32_t i = 0; str[i] != '\0'; i++){
+                if (ind == -1 && str[i] == '='){
+                    ind = i;
+                    break;
                 }
             }
 
@@ -492,16 +501,17 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 for (uint32_t i = 0; i < ind; i++){
                     left[i] = str[i];
                 }
-                char* right = new char[str_size - ind];
-                right[str_size - ind - 1] = '\0';
+                char* right = new char[size_str - ind];
+                right[size_str - ind - 1] = '\0';
 
-                for (uint32_t i = ind + 1; i < str_size; i++){
+                for (uint32_t i = ind + 1; i < size_str; i++){
                     right[i - ind - 1] = str[i];
                 }
 
                 inf_node = GetParserNode(parser, left);
                 delete[] left;
                 str = right;
+                size_str = size_str - ind - 1;
             }
         }
 
@@ -634,6 +644,10 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
         if (!current_value) {
             return false;
         }
+    }
+
+    if (current_value == nullptr){
+        return false;
     }
 
     *value = *current_value->element.element.t1;
