@@ -2,18 +2,18 @@
 #include <cstdlib>
 #include <iostream>
 
-bool nargparse::IsInt(const char *str) { 
+bool nargparse::IsInt(const char *str) {
     char *pos;
     strtol(str, &pos, 0);
 
-    return *pos == '\0'; 
+    return *pos == '\0';
 }
 
 bool nargparse::IsFloat(const char *str) {
     char *pos;
     strtod(str, &pos);
 
-    return *pos == '\0'; 
+    return *pos == '\0';
 }
 
 bool nargparse::EqualString(const char *left, const char *right) {
@@ -55,19 +55,11 @@ void nargparse::ExpandParserList(ArgumentParser &parser, ParserNode *element) {
     }
 }
 
-void nargparse::ExpandPositionParserList(ArgumentParser &parser, PositionParserNode *element) {
-    if (parser.begin_pos) {
-        parser.prev_end_pos = parser.prev_end_pos->next = element;
-    } else {
-        parser.begin_pos = parser.prev_end_pos = element;
-    }
-}
-
-bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_arg) {
+bool nargparse::WritePositionArgument(ParserNode *node, const char *new_arg) {
     bool result_write = true;
     switch (node->place_save_first.type) {
     case VariantBase::BaseEnum::kInt: {
-        if (!IsInt(new_arg)){
+        if (!IsInt(new_arg)) {
             return false;
         }
         int32_t current = atoll(new_arg);
@@ -79,17 +71,17 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
 
             if (node->begin_result == nullptr) {
                 *node->place_save_first.element.t1 = current;
-                node->begin_result = node->prev_result = new BaseNode{nullptr, new_variant};
+                node->begin_result = node->prev_end_result = new BaseNode{nullptr, new_variant};
             } else {
-                node->prev_result = node->prev_result->next = new BaseNode{nullptr, new_variant};
+                node->prev_end_result = node->prev_end_result->next = new BaseNode{nullptr, new_variant};
             }
         } else {
-            result_write = false;
+            return false;
         }
         break;
     }
     case VariantBase::BaseEnum::kFloat: {
-        if (!IsFloat(new_arg)){
+        if (!IsFloat(new_arg)) {
             return false;
         }
         float current = atof(new_arg);
@@ -101,9 +93,9 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
 
             if (node->begin_result == nullptr) {
                 *node->place_save_first.element.t3 = current;
-                node->begin_result = node->prev_result = new BaseNode{nullptr, new_variant};
+                node->begin_result = node->prev_end_result = new BaseNode{nullptr, new_variant};
             } else {
-                node->prev_result = node->prev_result->next = new BaseNode{nullptr, new_variant};
+                node->prev_end_result = node->prev_end_result->next = new BaseNode{nullptr, new_variant};
             }
         } else {
             result_write = false;
@@ -111,23 +103,21 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
         break;
     }
     case VariantBase::BaseEnum::kString: {
-        char *current;
-        current = new char[kBuffSize]{'\0'};
-        for (uint32_t index = 0; new_arg[index] != '\0'; index++){
-            current[index] = new_arg[index];
-        }
-
         if (node->validation_string(new_arg)) {
             VariantBase new_variant;
-            *new_variant.element.t4 = current;
+            *new_variant.element.t4 = new char[kBuffSize]{'\0'};
+            for (uint32_t index = 0; index < 128 && new_arg[index] != '\0'; index++) {
+                (*new_variant.element.t4)[index] = new_arg[index];
+            }
+
             new_variant.type = VariantBase::BaseEnum::kString;
             node->size++;
 
             if (node->begin_result == nullptr) {
-                *node->place_save_first.element.t4 = current;
-                node->begin_result = node->prev_result = new BaseNode{nullptr, new_variant};
+                *node->place_save_first.element.t4 = *new_variant.element.t4;
+                node->begin_result = node->prev_end_result = new BaseNode{nullptr, new_variant};
             } else {
-                node->prev_result = node->prev_result->next = new BaseNode{nullptr, new_variant};
+                node->prev_end_result = node->prev_end_result->next = new BaseNode{nullptr, new_variant};
             }
         } else {
             result_write = false;
@@ -148,9 +138,9 @@ bool nargparse::WritePositionArgument(PositionParserNode *node, const char *new_
 
             if (node->begin_result == nullptr) {
                 *node->place_save_first.element.t2 = current;
-                node->begin_result = node->prev_result = new BaseNode{nullptr, new_variant};
+                node->begin_result = node->prev_end_result = new BaseNode{nullptr, new_variant};
             } else {
-                node->prev_result = node->prev_result->next = new BaseNode{nullptr, new_variant};
+                node->prev_end_result = node->prev_end_result->next = new BaseNode{nullptr, new_variant};
             }
         } else {
             result_write = false;
@@ -184,16 +174,6 @@ nargparse::ParserNode *nargparse::GetParserNode(ArgumentParser &parser, const ch
     return current;
 }
 
-nargparse::PositionParserNode *nargparse::GetPositionParserNode(ArgumentParser &parser, const char *name) {
-    PositionParserNode *current = parser.begin_pos;
-
-    while (current && !EqualString(current->name, name)) {
-        current = current->next;
-    }
-
-    return current;
-}
-
 nargparse::ParserNode *nargparse::MakeParserNode(const char *short_argument, const char *long_argument,
                                                  const char *help_info) {
     ParserNode *parser_node = new ParserNode;
@@ -204,8 +184,8 @@ nargparse::ParserNode *nargparse::MakeParserNode(const char *short_argument, con
     return parser_node;
 }
 
-nargparse::PositionParserNode *nargparse::MakePositionParserNode(const char *name, const char *help_info) {
-    PositionParserNode *pos_node = new PositionParserNode;
+nargparse::ParserNode *nargparse::MakeParserNode(const char *name, const char *help_info) {
+    ParserNode *pos_node = new ParserNode;
     pos_node->name = name;
     pos_node->help = help_info;
 
@@ -288,7 +268,7 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
                             const char *help_info, CountArgument count_argument, const char *name) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kString;
-    current.element.t4 = new char*;
+    current.element.t4 = new char *;
     *current.element.t4 = *value;
     ParserNode *node = AddArgument(parser, short_argument, long_argument, current, help_info);
     node->validation_string = validation;
@@ -300,38 +280,40 @@ void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             int32_t *value, const char *name, CountArgument count_argument,
                             bool (*validation)(const int32_t &value), const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, bool *value,
                             const char *name, CountArgument count_argument, bool (*validation)(const bool &value),
                             const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument, float *value,
                             const char *name, CountArgument count_argument, bool (*validation)(const float &value),
                             const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
 }
 
 void nargparse::AddArgument(ArgumentParser &parser, const char *short_argument, const char *long_argument,
                             char (*value)[kBuffSize], const char *name, CountArgument count_argument,
                             bool (*validation)(const char *const &value), const char *help_info) {
-    AddArgument(parser, short_argument, long_argument, value, validation, help_info);
+    AddArgument(parser, short_argument, long_argument, value, validation, help_info, count_argument);
 }
 
-nargparse::PositionParserNode *nargparse::AddPositionArgument(ArgumentParser &parser, VariantBase value,
-                                                              const char *name, CountArgument count_argument,
-                                                              const char *help_info) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+nargparse::ParserNode *nargparse::AddPositionArgument(ArgumentParser &parser, VariantBase value, const char *name,
+                                                      CountArgument count_argument, const char *help_info) {
+    ParserNode *node = GetParserNode(parser, name);
 
     if (node != nullptr) {
         node->place_save_first = value;
+        node->count_argument = count_argument;
+        ExpandBaseList(node, value);
         return node;
     } else {
-        ExpandPositionParserList(parser, MakePositionParserNode(name, help_info));
-        node = parser.prev_end_pos;
+        ExpandParserList(parser, MakeParserNode(name, help_info));
+        node = parser.prev_end;
+        ExpandBaseList(node, value);
         node->place_save_first = value;
         node->count_argument = count_argument;
         return node;
@@ -343,7 +325,7 @@ void nargparse::AddArgument(ArgumentParser &parser, int32_t *value, const char *
     VariantBase current;
     current.type = VariantBase::BaseEnum::kInt;
     current.element.t1 = value;
-    PositionParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
+    ParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
     node->validation_int = validation;
 }
 
@@ -352,7 +334,7 @@ void nargparse::AddArgument(ArgumentParser &parser, bool *value, const char *nam
     VariantBase current;
     current.type = VariantBase::BaseEnum::kBool;
     current.element.t2 = value;
-    PositionParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
+    ParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
     node->validation_bool = validation;
 }
 
@@ -361,7 +343,7 @@ void nargparse::AddArgument(ArgumentParser &parser, float *value, const char *na
     VariantBase current;
     current.type = VariantBase::BaseEnum::kFloat;
     current.element.t3 = value;
-    PositionParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
+    ParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
     node->validation_float = validation;
 }
 
@@ -370,9 +352,9 @@ void nargparse::AddArgument(ArgumentParser &parser, char (*value)[kBuffSize], co
                             const char *help_info) {
     VariantBase current;
     current.type = VariantBase::BaseEnum::kString;
-    current.element.t4 = new char*;
+    current.element.t4 = new char *;
     *current.element.t4 = *value;
-    PositionParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
+    ParserNode *node = AddPositionArgument(parser, current, name, count_argument, help_info);
     node->validation_string = validation;
 }
 
@@ -391,7 +373,7 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
     while (current_node) {
         switch (current_node->element.type) {
         case VariantBase::BaseEnum::kInt: {
-            if (!IsInt(value)){
+            if (!IsInt(value)) {
                 return false;
             }
 
@@ -404,7 +386,7 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
             break;
         }
         case VariantBase::BaseEnum::kFloat: {
-            if (!IsFloat(value)){
+            if (!IsFloat(value)) {
                 return false;
             }
             float current = atof(value);
@@ -419,7 +401,7 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
             if (node->validation_string(value)) {
                 //*current_node->element.element.t4 = current;
                 uint32_t index = 0;
-                for (; value[index] != '\0'; index++){
+                for (; index < 127 && value[index] != '\0'; index++) {
                     (*current_node->element.element.t4)[index] = value[index];
                 }
                 (*current_node->element.element.t4)[index] = value[index];
@@ -449,73 +431,77 @@ bool nargparse::SetValues(ParserNode *node, const char *value) {
     return validation_result;
 }
 
+void nargparse::NextPositionArgument(ParserNode *current) {
+    while (current) {
+        current = current->next;
+
+        if (current->short_argument == nullptr && current->long_argument == nullptr) {
+            return;
+        }
+    }
+
+    return;
+}
+
 bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) {
     bool result_parsing = true;
-    PositionParserNode *current_position_node = parser.begin_pos;
+    ParserNode *current_position_node = parser.begin;
+    if (current_position_node->short_argument != nullptr || current_position_node->long_argument != nullptr) {
+        NextPositionArgument(current_position_node);
+    }
+
+    ParserNode *inf_node = nullptr;
 
     for (uint32_t index_argv = 1; result_parsing && index_argv < argc; index_argv++) {
         ParserNode *node = GetParserNode(parser, argv[index_argv]);
 
         if (node) {
+            inf_node = nullptr;
             if (EqualString(node->short_argument, "-h")) {
-                if (node->was_info == 0) {
+                if (node->size == 0) {
                     std::cout << "There help" << std::endl;
                 }
-
-                node->was_info = 1;
+                ++node->size;
                 continue;
             }
-
             MarkFlags(node);
 
-            node->was_info = 1;
             if (node->begin_base) {
-                ++index_argv;
+                inf_node = node;
+            }
+        } else {
+            if (inf_node != nullptr) {
+                ++node->size;
                 const char *argument = argv[index_argv];
 
                 result_parsing &= SetValues(node, argument);
-            }
 
-            if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
-                if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
-                    current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
-                    current_position_node = current_position_node->next;
+                if (current_position_node->count_argument == CountArgument::kNargsRequired ||
+                    current_position_node->count_argument == CountArgument::kNargsOptional) {
+                    inf_node = nullptr;
+                };
+            } else {
+                if (!current_position_node) {
+                    return false;
+                }
+
+                result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
+
+                if (current_position_node->count_argument == CountArgument::kNargsRequired ||
+                    current_position_node->count_argument == CountArgument::kNargsOptional) {
+                    NextPositionArgument(current_position_node);
                 }
             }
-        } else {
-            if (!current_position_node) {
-                return false;
-            }
-
-            result_parsing &= WritePositionArgument(current_position_node, argv[index_argv]);
-
-            if (current_position_node->count_argument == CountArgument::kNargsRequired ||
-                current_position_node->count_argument == CountArgument::kNargsOptional) {
-                if (current_position_node->size > 1) {
-                    result_parsing = false;
-                }
-                current_position_node = current_position_node->next;
-            }
-        }
-    }
-
-    if (current_position_node) {
-        if (current_position_node->count_argument == CountArgument::kNargsRequired ||
-            current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
-            if (current_position_node->size < 1) {
-                result_parsing = false;
-            }
-            current_position_node = current_position_node->next;
         }
     }
 
     ParserNode *node = parser.begin;
     while (node) {
-        if (node->count_argument == CountArgument::kNargsRequired && node->was_info == 0) {
+        if (node->count_argument == CountArgument::kNargsRequired && node->size == 0) {
             result_parsing = false;
             break;
         }
-        node->was_info = 0;
+        node->size = 0;
         node = node->next;
     }
 
@@ -538,7 +524,8 @@ void nargparse::FreeFlagList(FlagNode *node) {
     }
 }
 
-void nargparse::FreeUsuallyArguments(ArgumentParser &parser) {
+// improve this function on position argument
+void nargparse::FreeArguments(ArgumentParser &parser) {
     ParserNode *current_node = parser.begin;
     while (current_node) {
         ParserNode *next = current_node->next;
@@ -549,30 +536,17 @@ void nargparse::FreeUsuallyArguments(ArgumentParser &parser) {
     }
 }
 
-void nargparse::FreePositionArguments(ArgumentParser &parser) {
-    PositionParserNode *current_node = parser.begin_pos;
-    while (current_node) {
-        PositionParserNode *next = current_node->next;
-        FreeBaseList(current_node->begin_result);
-        delete current_node;
-        current_node = next;
-    }
-}
-
-void nargparse::FreeParser(ArgumentParser &parser) {
-    FreeUsuallyArguments(parser);
-    FreePositionArguments(parser);
-}
+void nargparse::FreeParser(ArgumentParser &parser) { FreeArguments(parser); }
 
 uint32_t nargparse::GetRepeatedCount(ArgumentParser &parser, const char *name) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+    ParserNode *node = GetParserNode(parser, name);
     uint32_t result = node->size;
 
     return result;
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char *value) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+    ParserNode *node = GetParserNode(parser, name);
     if (!node) {
         return false;
     }
@@ -591,7 +565,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, int32_t *value) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+    ParserNode *node = GetParserNode(parser, name);
     if (!node) {
         return false;
     }
@@ -609,7 +583,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, bool *value) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+    ParserNode *node = GetParserNode(parser, name);
     if (!node) {
         return false;
     }
@@ -627,7 +601,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
 }
 
 bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, float *value) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+    ParserNode *node = GetParserNode(parser, name);
     if (!node) {
         return false;
     }
@@ -644,8 +618,8 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     return true;
 }
 
-bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char** value) {
-    PositionParserNode *node = GetPositionParserNode(parser, name);
+bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t index, const char **value) {
+    ParserNode *node = GetParserNode(parser, name);
     if (!node) {
         return false;
     }
