@@ -83,10 +83,10 @@ struct ArgumentParser {
     PositionParserNode *prev_end_pos;
 };
 
-bool FTrueInt(const int32_t &value) { return true; }
-bool FTrueFloat(const float &value) { return true; }
-bool FTrueBool(const bool &value) { return true; }
-bool FTrueString(const char *const &value) { return true; }
+inline bool FTrueInt(const int32_t &value) { return true; }
+inline bool FTrueFloat(const float &value) { return true; }
+inline bool FTrueBool(const bool &value) { return true; }
+inline bool FTrueString(const char *const &value) { return true; }
 
 bool EqualString(const char *left, const char *right);
 
