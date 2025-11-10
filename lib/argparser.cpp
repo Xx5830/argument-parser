@@ -457,19 +457,20 @@ bool nargparse::Parse(ArgumentParser &parser, uint32_t argc, const char **argv) 
                 continue;
             }
 
+            MarkFlags(node);
+
             node->was_info = 1;
             if (node->begin_base) {
                 ++index_argv;
                 const char *argument = argv[index_argv];
 
-                MarkFlags(node);
                 result_parsing &= SetValues(node, argument);
+            }
 
-                if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
-                    if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
-                        current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
-                        current_position_node = current_position_node->next;
-                    }
+            if (current_position_node && current_position_node->size > 0 && current_position_node->next) {
+                if (current_position_node->count_argument == CountArgument::kNargsZeroOrMore ||
+                    current_position_node->count_argument == CountArgument::kNargsOneOrMore) {
+                    current_position_node = current_position_node->next;
                 }
             }
         } else {
