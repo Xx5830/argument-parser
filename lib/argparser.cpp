@@ -554,7 +554,7 @@ bool nargparse::GetRepeated(ArgumentParser &parser, const char *name, uint32_t i
     if (!node) {
         return false;
     }
-    BaseNode *current_value = node->prev_result;
+    BaseNode *current_value = node->begin_result;
 
     for (uint32_t k = 0; k < index; k++) {
         current_value = current_value->next;
