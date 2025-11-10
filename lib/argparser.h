@@ -157,6 +157,8 @@ bool Parse(ArgumentParser &parser, uint32_t argc, const char **argv);
 
 void FreeBaseList(BaseNode *node);
 
+void FreeResultBaseList(BaseNode *node);
+
 void FreeFlagList(FlagNode *node);
 
 void FreeArguments(ArgumentParser &parser);

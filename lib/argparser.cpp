@@ -591,6 +591,33 @@ void nargparse::FreeBaseList(BaseNode *node) {
     }
 }
 
+void nargparse::FreeResultBaseList(BaseNode *node) {
+    while (node) {
+        BaseNode *next = node->next;
+        switch (node->element.type) {
+            case VariantBase::BaseEnum::kInt: {
+                delete node->element.element.t1;
+                break;
+            }
+            case VariantBase::BaseEnum::kFloat: {
+                delete node->element.element.t3;
+                break;
+            }
+            case VariantBase::BaseEnum::kString: {
+                delete[] (*node->element.element.t4);
+                delete node->element.element.t4;
+                break;
+            }
+            case VariantBase::BaseEnum::kBool: {
+                delete node->element.element.t2;
+                break;
+            }
+            }
+        delete node;
+        node = next;
+    }
+}
+
 void nargparse::FreeFlagList(FlagNode *node) {
     while (node) {
         FlagNode *next = node->next;
@@ -599,12 +626,12 @@ void nargparse::FreeFlagList(FlagNode *node) {
     }
 }
 
-// improve this function on position argument
 void nargparse::FreeArguments(ArgumentParser &parser) {
     ParserNode *current_node = parser.begin;
     while (current_node) {
         ParserNode *next = current_node->next;
         FreeBaseList(current_node->begin_base);
+        FreeResultBaseList(current_node->begin_result);
         FreeFlagList(current_node->begin_flag);
         delete current_node;
         current_node = next;
