@@ -445,7 +445,7 @@ nargparse::ParserNode* nargparse::GetNextPositionArgument(ParserNode *current) {
     while (current) {
         current = current->next;
 
-        if (current->short_argument == nullptr && current->long_argument == nullptr) {
+        if (current && current->short_argument == nullptr && current->long_argument == nullptr) {
             return current;
         }
     }
