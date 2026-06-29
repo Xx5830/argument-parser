@@ -1,0 +1,829 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.github/
+  workflows/
+    ci.yml
+bin/
+  CMakeLists.txt
+  main.cpp
+lib/
+  argparser.cpp
+  argparser.hpp
+  CMakeLists.txt
+tests/
+  argparser_tests
+  argparser_tests.cpp
+  CMakeLists.txt
+.gitignore
+CMakeLists.txt
+CMakePresets.json
+justfile
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".github/workflows/ci.yml">
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake (Debug + Sanitizers)
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build
+      run: cmake --build build -j$(nproc)
+
+    - name: Test (with Address Sanitizer)
+      working-directory: build
+      run: ctest --output-on-failure --test-dir tests
+</file>
+
+<file path="lib/argparser.hpp">
+#pragma once
+
+#include <charconv>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace nargparse {
+
+enum class Nargs { ZeroOrMore, OneOrMore, Required, Optional };
+
+class ArgumentParser {
+  public:
+    explicit ArgumentParser(std::string name) : name_(std::move(name)) {}
+
+    template <typename T, typename Validator = std::function<bool(const T&)>>
+    void AddArgument(std::string short_name, std::string long_name, T* store_to, std::string help_info = "",
+                     Nargs count = Nargs::Optional, Validator validator = nullptr) {
+        auto arg = std::make_unique<ArgModel<T>>();
+        arg->short_name = std::move(short_name);
+        arg->long_name = std::move(long_name);
+        arg->help = std::move(help_info);
+        arg->store_to = store_to;
+        arg->count_rule = count;
+        if constexpr (!std::is_same_v<Validator, std::nullptr_t>) {
+            arg->validator = validator;
+        }
+        args_.push_back(std::move(arg));
+    }
+
+    template <typename T, typename Validator = std::function<bool(const T&)>>
+    void AddPositional(std::string name, T* store_to, Nargs count = Nargs::Optional, Validator validator = nullptr) {
+        auto arg = std::make_unique<ArgModel<T>>();
+        arg->pos_name = std::move(name);
+        arg->is_positional = true;
+        arg->store_to = store_to;
+        arg->count_rule = count;
+        if constexpr (!std::is_same_v<Validator, std::nullptr_t>) {
+            arg->validator = validator;
+        }
+        args_.push_back(std::move(arg));
+    }
+
+    // Флаги
+    void AddFlag(std::string short_name, std::string long_name, bool* store_to, std::string help_info = "",
+                 bool default_val = false) {
+        auto arg = std::make_unique<ArgModel<bool>>();
+        arg->short_name = std::move(short_name);
+        arg->long_name = std::move(long_name);
+        arg->help = std::move(help_info);
+        arg->store_to = store_to;
+        arg->is_flag = true;
+        arg->count_rule = Nargs::Optional;
+        if (store_to)
+            *store_to = default_val;
+        args_.push_back(std::move(arg));
+    }
+
+    void AddHelp() { has_help_ = true; }
+    void PrintHelp() const;
+
+    bool Parse(int argc, const char** argv);
+
+    size_t GetRepeatedCount(std::string_view name) const;
+
+    template <typename T>
+    std::optional<T> GetRepeated(std::string_view name, size_t index) const {
+        if (auto* base = FindByName(name)) {
+            if (auto* model = dynamic_cast<const ArgModel<T>*>(base)) {
+                if (index < model->values.size()) {
+                    return model->values[index];
+                }
+            }
+        }
+        return std::nullopt;
+    }
+
+  private:
+    struct ArgConcept {
+        virtual ~ArgConcept() = default;
+        virtual bool ParseValue(std::string_view str) = 0;
+        virtual void MarkFlag() = 0;
+        virtual size_t ParsedCount() const = 0;
+
+        std::string short_name;
+        std::string long_name;
+        std::string pos_name;
+        std::string help;
+        Nargs count_rule = Nargs::Optional;
+        bool is_positional = false;
+        bool is_flag = false;
+    };
+
+    template <typename T>
+    struct ArgModel final : ArgConcept {
+        T* store_to = nullptr;
+        std::function<bool(const T&)> validator;
+        std::vector<T> values;
+
+        bool ParseValue(std::string_view str) override;
+
+        void MarkFlag() override {
+            if constexpr (std::is_same_v<T, bool>) {
+                if (store_to)
+                    *store_to = true;
+                values.push_back(true);
+            }
+        }
+
+        size_t ParsedCount() const override { return values.size(); }
+    };
+
+    std::string name_;
+    bool has_help_ = false;
+    std::vector<std::unique_ptr<ArgConcept>> args_;
+
+    ArgConcept* FindByName(std::string_view name) const;
+};
+
+// Реализации конвертации (без изменений, только добавим для int32_t)
+template <typename T>
+std::optional<T> ConvertString(std::string_view str);
+
+template <>
+inline std::optional<int32_t> ConvertString<int32_t>(std::string_view str) {
+    int32_t result;
+    auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
+    if (ec == std::errc() && ptr == str.data() + str.size())
+        return result;
+    return std::nullopt;
+}
+
+template <>
+inline std::optional<int> ConvertString<int>(std::string_view str) {
+    int result;
+    auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
+    if (ec == std::errc() && ptr == str.data() + str.size())
+        return result;
+    return std::nullopt;
+}
+
+template <>
+inline std::optional<float> ConvertString<float>(std::string_view str) {
+    try {
+        std::string s(str);
+        size_t pos = 0;
+        float f = std::stof(s, &pos);
+        if (pos == s.length())
+            return f;
+    } catch (...) {
+    }
+    return std::nullopt;
+}
+
+template <>
+inline std::optional<std::string> ConvertString<std::string>(std::string_view str) {
+    return std::string(str);
+}
+
+template <>
+inline std::optional<bool> ConvertString<bool>(std::string_view str) {
+    if (str == "true" || str == "1")
+        return true;
+    if (str == "false" || str == "0")
+        return false;
+    return std::nullopt;
+}
+
+template <typename T>
+bool ArgumentParser::ArgModel<T>::ParseValue(std::string_view str) {
+    auto val_opt = ConvertString<T>(str);
+    if (!val_opt)
+        return false;
+
+    if (validator && !validator(*val_opt))
+        return false;
+
+    if (values.empty() && store_to) {
+        *store_to = *val_opt;
+    }
+    values.push_back(std::move(*val_opt));
+    return true;
+}
+
+} // namespace nargparse
+</file>
+
+<file path="CMakePresets.json">
+{
+    "version" : 3,
+    "configurePresets": [
+        {
+            "name" : "parent",
+            "hidden" : true,
+            "generator" : "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "debug",
+            "inherits": "parent",
+            "description": "debug build without optimization",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Debug",
+                "BUILD_TESTING" : "TRUE"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "release",
+            "inherits": "parent",
+            "description": "release build with optimization",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Release",
+                "BUILD_TESTING" : "FALSE"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "jobs": 8
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "jobs": 4
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}
+</file>
+
+<file path="justfile">
+set shell := ["sh", "-c"]
+set windows-shell := ["cmd.exe", "/c"]
+
+#Help
+default:
+    @just --list --unsorted
+
+#Очистка build
+clear:
+    cmake -E rm -rf build
+
+#Конфигурация cmake
+setup preset = "release":
+    cmake --preset {{preset}}
+
+#Сборка проекта
+build preset = "release": (setup preset)
+    cmake --build --preset {{preset}}
+
+#Запуск тестов
+test preset = "debug": (build preset)
+    ctest --preset {{preset}}
+
+#Группируем проект в файл
+token :
+    npx repomix
+</file>
+
+<file path="bin/CMakeLists.txt">
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE argparser)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+</file>
+
+<file path="lib/CMakeLists.txt">
+add_library(argparser STATIC argparser.cpp)
+target_include_directories(argparser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+</file>
+
+<file path="tests/argparser_tests.cpp">
+#include "lib/argparser.hpp"
+#include <cstring>
+#include <gtest/gtest.h>
+#include <string>
+#include <vector>
+
+static const size_t kMaxArgLen = 128;
+
+class ArgParserTest : public ::testing::Test {
+  protected:
+    void SetUp() override { parser = std::make_unique<nargparse::ArgumentParser>("test_program"); }
+
+    void TearDown() override { parser.reset(); }
+
+    std::unique_ptr<nargparse::ArgumentParser> parser;
+
+    bool ParseArgs(std::initializer_list<const char*> args) {
+        std::vector<const char*> argv(args);
+        return parser->Parse(static_cast<int>(argv.size()), argv.data());
+    }
+};
+
+bool IsEven(const int& value) { return value % 2 == 0; }
+bool IsPositive(const int& value) { return value > 0; }
+bool IsValidPort(const int& value) { return value > 0 && value <= 65535; }
+bool IsPositiveFloat(const float& value) { return value > 0.0f; }
+bool IsValidTemperature(const float& value) { return value >= -273.15f && value <= 1000.0f; }
+bool IsNormalizedFloat(const float& value) { return value >= 0.0f && value <= 1.0f; }
+bool IsNotEmpty(const std::string& value) { return !value.empty(); }
+bool IsValidEmail(const std::string& value) { return value.find('@') != std::string::npos && value.length() > 3; }
+bool IsAlphaOnly(const std::string& value) {
+    if (value.empty())
+        return false;
+    for (char c : value)
+        if (!std::isalpha(c))
+            return false;
+    return true;
+}
+
+TEST_F(ArgParserTest, EmptyParser) { EXPECT_TRUE(ParseArgs({"program"})); }
+
+TEST_F(ArgParserTest, FlagArguments) {
+    bool flag1 = false, flag2 = false;
+    parser->AddFlag("-f", "--flag1", &flag1, "First flag", false);
+    parser->AddFlag("-g", "--flag2", &flag2, "Second flag", true);
+
+    EXPECT_FALSE(flag1);
+    EXPECT_TRUE(flag2);
+
+    EXPECT_TRUE(ParseArgs({"program", "-f", "--flag2"}));
+    EXPECT_TRUE(flag1);
+    EXPECT_TRUE(flag2);
+}
+
+TEST_F(ArgParserTest, PositionalArguments) {
+    int value = 0;
+    parser->AddPositional("Number", &value, nargparse::Nargs::Required);
+    EXPECT_TRUE(ParseArgs({"program", "42"}));
+    EXPECT_EQ(value, 42);
+}
+
+TEST_F(ArgParserTest, RepeatedArguments) {
+    int first_value = 0;
+    parser->AddPositional("Numbers", &first_value, nargparse::Nargs::OneOrMore);
+    EXPECT_TRUE(ParseArgs({"program", "1", "2", "3", "4", "5"}));
+    EXPECT_EQ(first_value, 1);
+    EXPECT_EQ(parser->GetRepeatedCount("Numbers"), 5);
+    for (int i = 0; i < 5; ++i) {
+        auto val = parser->GetRepeated<int>("Numbers", i);
+        ASSERT_TRUE(val.has_value());
+        EXPECT_EQ(val.value(), i + 1);
+    }
+}
+
+TEST_F(ArgParserTest, ValidationFunctionSuccess) {
+    int first_value = 0;
+    parser->AddPositional("Even numbers", &first_value, nargparse::Nargs::ZeroOrMore, IsEven);
+    EXPECT_TRUE(ParseArgs({"program", "2", "4", "6"}));
+    EXPECT_EQ(first_value, 2);
+    EXPECT_EQ(parser->GetRepeatedCount("Even numbers"), 3);
+}
+
+TEST_F(ArgParserTest, ValidationFunctionFailure) {
+    int first_value = 0;
+    parser->AddPositional("Even numbers", &first_value, nargparse::Nargs::ZeroOrMore, IsEven);
+    EXPECT_FALSE(ParseArgs({"program", "2", "3", "4"}));
+}
+
+TEST_F(ArgParserTest, HelpFlag) {
+    parser->AddHelp();
+    EXPECT_TRUE(ParseArgs({"program", "--help"}));
+    // вывод справки в stdout (можно не проверять содержимое)
+}
+
+TEST_F(ArgParserTest, MixedArguments) {
+    bool verbose = false, quiet = false;
+    int first_number = 0;
+    parser->AddFlag("-v", "--verbose", &verbose, "Verbose output");
+    parser->AddFlag("-q", "--quiet", &quiet, "Quiet output");
+    parser->AddPositional("Numbers", &first_number, nargparse::Nargs::ZeroOrMore);
+    EXPECT_TRUE(ParseArgs({"program", "-v", "10", "20", "30"}));
+    EXPECT_TRUE(verbose);
+    EXPECT_FALSE(quiet);
+    EXPECT_EQ(first_number, 10);
+    EXPECT_EQ(parser->GetRepeatedCount("Numbers"), 3);
+    for (int i = 0; i < 3; ++i) {
+        auto val = parser->GetRepeated<int>("Numbers", i);
+        ASSERT_TRUE(val.has_value());
+        EXPECT_EQ(val.value(), (i + 1) * 10);
+    }
+}
+</file>
+
+<file path="tests/CMakeLists.txt">
+include(FetchContent)
+
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/releases/download/v1.16.0/googletest-1.16.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP ON
+    FIND_PACKAGE_ARGS NAMES GTest
+)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(
+  argparser_tests
+  argparser_tests.cpp
+)
+
+target_link_libraries(
+  argparser_tests
+  argparser
+  GTest::gtest_main
+)
+
+target_include_directories(argparser_tests PUBLIC ${PROJECT_SOURCE_DIR})
+
+include(GoogleTest)
+
+gtest_discover_tests(argparser_tests)
+</file>
+
+<file path="CMakeLists.txt">
+cmake_minimum_required(VERSION 3.20)
+
+project(ArgumentParser
+    VERSION 1.0.0
+    DESCRIPTION "ITMO C++ Year 2025 Labwork3 (No-STL/No-Templates architecture)"
+    LANGUAGES CXX
+)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_compile_options(-fsanitize=address,undefined -g)
+    add_link_options(-fsanitize=address,undefined)
+endif()
+
+add_subdirectory(lib)
+add_subdirectory(bin)
+
+enable_testing()
+add_subdirectory(tests)
+</file>
+
+<file path="bin/main.cpp">
+#include "argparser.hpp"
+#include <iostream>
+#include <string>
+
+int main(int argc, const char** argv) {
+    using namespace nargparse;
+
+    std::string host;
+    int32_t port = 8080;
+    bool verbose = false;
+
+    ArgumentParser parser("My Awesome Server");
+
+    parser.AddHelp();
+    parser.AddPositional("host", &host, Nargs::Required);
+    parser.AddArgument<int>("-p", "--port", &port, "Port to bind", Nargs::Optional,
+                            std::function<bool(const int&)>{[](const int& p) { return p > 0 && p <= 65535; }});
+    parser.AddFlag("-v", "--verbose", &verbose, "Enable verbose output");
+
+    if (!parser.Parse(argc, argv)) {
+        std::cerr << "Error parsing arguments!\n";
+        parser.PrintHelp();
+        return 1;
+    }
+
+    std::cout << "Starting server on " << host << ":" << port << "\n";
+    std::cout << "Verbose: " << (verbose ? "yes" : "no") << "\n";
+
+    return 0;
+}
+</file>
+
+<file path=".gitignore">
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# debug information files
+*.dwo
+
+build
+lib/.vscode
+lib/hoot.cpp
+lib/hoot
+</file>
+
+<file path="README.md">
+# Лабораторная работа 3
+
+## Задача
+
+Спроектировать и реализовать библиотеку для парсинга аргументов командной строки.
+
+## Требования
+
+В качестве требований Вам дается файл с [тестами](tests/argparser_tests.cpp). Исходя из тестов, Вы должны понять, какой набор функций предоставляет библиотека. Ваша задача добиться, чтобы все тесты "проходили".
+
+Типы, которые нужно поддерживать:
+ - целые числа
+ - вещественные числа
+ - флаги
+ - строки (максимальная длина - константа)
+   
+Ограничения на длину имен аргументов и описаний быть не должно.
+
+Вам не запрещается добавлять произвольные типы и расширять функционал.
+
+### Тесты
+
+Как и в предыдущих лабораторных работах, в качестве тестового фреймворка используется [GoogleTest](https://google.github.io/googletest/). Каждый тест представляет из себя функцию, в рамках которой проверяются некоторые условия за счет [assert'ов](https://google.github.io/googletest/reference/assertions.html).
+
+Тесты не покрывают всю функциональность. Рекомендуется дополнить их собственными проверками.
+
+## Реализация
+
+Реализация должна находиться в библиотеке [argparser](lib/CMakeLists.txt).
+
+Лабораторная работа подразумевает работу с динамическим аллоцированием памяти. Подумайте, как её тут можно использовать.
+
+Подумайте как избежать лишней копипасты кода.
+
+## Ограничения
+
+В реализации запрещено использовать:
+ - Контейнеры и строки
+ - Шаблоны
+ - Классы
+
+### Примеры запуска
+
+Пример программы с использованием парсера находится в [bin](bin/main.cpp). Программа умеет складывать или умножать переданные ей аргументы.
+
+*labwork3 --sum 2 4 6*
+
+*labwork3 --mult 2 4 6*
+
+## ТеорМин
+
+1. Виртуальное адресное пространство    
+2. Сегменты памяти
+3. Стэк вызова
+4. Куча
+5. Перегрузки функций
+6. Ссылки
+7. Namespace
+8. Препроцессор
+
+
+## Deadline
+
+| deadline | date | coeff | branch |
+|----------|-----------------|-------|------------|
+| 0 | 10.11.25 23:59 | 1.0 | deadline_0 |
+| 1 | 17.11.25 23:59 | 0.8 | deadline_1 |
+| 2 | 24.11.25 23:59 | 0.65 | deadline_2 |
+| 3 | 01.12.25 00:00 | 0.5 | deadline_3 |
+
+Максимальное количество баллов - 12
+</file>
+
+<file path="lib/argparser.cpp">
+#include "argparser.hpp"
+#include <iostream>
+
+namespace nargparse {
+
+void ArgumentParser::PrintHelp() const {
+    std::cout << "Usage: " << name_ << " [options]\n";
+    for (const auto& arg : args_) {
+        if (arg->is_positional) {
+            std::cout << "  [" << arg->pos_name << "]\t" << arg->help << "\n";
+        } else {
+            std::cout << "  " << arg->short_name << ", " << arg->long_name << "\t" << arg->help << "\n";
+        }
+    }
+}
+
+ArgumentParser::ArgConcept* ArgumentParser::FindByName(std::string_view name) const {
+    for (const auto& arg : args_) {
+        if (arg->is_positional && arg->pos_name == name)
+            return arg.get();
+        if (arg->long_name.size() > 2 && arg->long_name.substr(2) == name)
+            return arg.get();
+        if (arg->help == name)
+            return arg.get();
+    }
+    return nullptr;
+}
+
+size_t ArgumentParser::GetRepeatedCount(std::string_view name) const {
+    auto* arg = FindByName(name);
+    return arg ? arg->ParsedCount() : 0;
+}
+
+bool ArgumentParser::Parse(int argc, const char** argv) {
+    auto pos_it = args_.begin();
+    auto advance_pos = [&]() {
+        while (pos_it != args_.end() && !(*pos_it)->is_positional) {
+            ++pos_it;
+        }
+    };
+    advance_pos();
+
+    for (int i = 1; i < argc; ++i) {
+        std::string_view token(argv[i]);
+
+        if (has_help_ && (token == "--help" || token == "-h")) {
+            PrintHelp();
+            return true;
+        }
+
+        if (token.starts_with("-") && token.size() > 1) {
+            std::string_view key = token;
+            std::string_view val;
+
+            auto eq_idx = token.find('=');
+            if (eq_idx != std::string_view::npos) {
+                key = token.substr(0, eq_idx);
+                val = token.substr(eq_idx + 1);
+            }
+
+            ArgConcept* matched = nullptr;
+            for (const auto& arg : args_) {
+                if (!arg->is_positional && (arg->short_name == key || arg->long_name == key)) {
+                    matched = arg.get();
+                    break;
+                }
+            }
+
+            if (!matched)
+                return false;
+
+            if (matched->is_flag) {
+                matched->MarkFlag();
+            } else {
+                if (eq_idx == std::string_view::npos) {
+                    if (i + 1 >= argc)
+                        return false;
+                    val = argv[++i];
+                }
+                if (!matched->ParseValue(val))
+                    return false;
+            }
+        } else {
+            if (pos_it == args_.end())
+                return false;
+            if (!(*pos_it)->ParseValue(token))
+                return false;
+
+            if ((*pos_it)->count_rule == Nargs::Required || (*pos_it)->count_rule == Nargs::Optional) {
+                ++pos_it;
+                advance_pos();
+            }
+        }
+    }
+
+    for (const auto& arg : args_) {
+        if (arg->count_rule == Nargs::Required && arg->ParsedCount() == 0)
+            return false;
+        if (arg->count_rule == Nargs::OneOrMore && arg->ParsedCount() == 0)
+            return false;
+    }
+
+    return true;
+}
+
+} // namespace nargparse
+</file>
+
+</files>

@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake (Debug + Sanitizers)
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build
+      run: cmake --build build -j$(nproc)
+
+    - name: Test (with Address Sanitizer)
+      working-directory: build
+      run: ctest --output-on-failure --test-dir tests
