@@ -39,3 +39,8 @@
 
 # debug information files
 *.dwo
+
+build
+lib/.vscode
+lib/hoot.cpp
+lib/hoot
